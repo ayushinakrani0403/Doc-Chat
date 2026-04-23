@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+
+}
+
+model User {
+  id         String      @id @default(cuid())
+  name       String
+  email      String      @unique
+  password   String?
+  plan       String      @default("free")
+  stripeId   String?
+  createdAt  DateTime    @default(now())
+  workspaces Workspace[]
+}
+
+model Workspace {
+  id           String     @id @default(cuid())
+  name         String
+  slug         String     @unique
+  userId       String
+  user         User       @relation(fields: [userId], references: [id] , onDelete: Cascade)
+  model        String?
+  systemPrompt String?
+  temperature  Float      @default(0.7)
+  color        String     @default("#6366F1")
+  position     String     @default("bottom-right")
+  welcomeMsg   String?
+  status       String     @default("active")
+  createdAt    DateTime   @default(now())
+  documents    Document[]
+  chatLogs     ChatLog[]
+}
+
+model Document {
+  id          String    @id @default(cuid())
+  filename    String
+  size        Int
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  uploadedAt  DateTime  @default(now())
+}
+
+model ChatLog {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sessionId   String
+  message     String
+  response    String
+  role        String
+  answered    Boolean   @default(true)   // ← ADD THIS
+  responseMs  Int?                        // ← ADD THIS (milliseconds)
+  createdAt   DateTime  @default(now())
+}
