@@ -17,6 +17,11 @@ type Stats = {
   totalDocs: number
   totalChats: number
   activeClients: number
+  
+  wsThisMonth: number        // ← ADD
+  docsThisWeek: number       // ← ADD
+  chatsThisMonth: number     // ← ADD
+  chatsPctChange: number  
 }
 
 type User = {
