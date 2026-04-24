@@ -233,10 +233,10 @@ export default function Sidebar() {
                 boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
               }}>
                 {/* User info header */}
-                <div style={{ padding: "12px 14px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                {/* <div style={{ padding: "12px 14px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: "#e4e4e7" }}>{session?.user?.name || "User"}</div>
                   <div style={{ fontSize: 11, color: "#52525b", marginTop: 2 }}>{session?.user?.email || ""}</div>
-                </div>
+                </div> */}
 
                 <Link
                   href="/dashboard/settings"
