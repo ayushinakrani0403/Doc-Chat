@@ -35,177 +35,431 @@ function LoginForm() {
   }
 
   return (
-    <div className="w-full max-w-md space-y-7">
-      <div className="flex items-center gap-2 lg:hidden">
-        <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: "#7c3aed" }}>
-          <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-white"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        </div>
-        <span className="text-white font-semibold">DocChat</span>
-      </div>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap');
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spin { animation: spin 0.8s linear infinite; }
 
-      <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Welcome back</h1>
-        <p className="text-sm mt-1" style={{ color: "#a1a1aa" }}>Sign in to your account to continue</p>
-      </div>
+        .login-root {
+          min-height: 100vh;
+          display: flex;
+          background: #080810;
+          font-family: 'Sora', sans-serif;
+        }
 
-      {error && (
-        <div className="flex items-start gap-3 rounded-xl px-4 py-3" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
-          <svg className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#f87171" }} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.8"/><path d="M12 8v4m0 4h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
-          <p className="text-sm" style={{ color: "#f87171" }}>{error}</p>
-        </div>
-      )}
+        /* LEFT PANEL */
+        .login-left {
+          width: 48%;
+          min-height: 100vh;
+          background: #0c0c18;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: clamp(2.5rem, 5vw, 5rem) clamp(2.5rem, 5vw, 5.5rem);
+          position: relative;
+          overflow: hidden;
+          flex-shrink: 0;
+        }
+        .login-left::before {
+          content: '';
+          position: absolute;
+          top: -200px; left: -150px;
+          width: clamp(400px, 50vw, 650px);
+          height: clamp(400px, 50vw, 650px);
+          background: radial-gradient(circle, rgba(124,58,237,0.22) 0%, transparent 70%);
+          pointer-events: none;
+        }
+        .login-left::after {
+          content: '';
+          position: absolute;
+          bottom: -150px; right: -100px;
+          width: clamp(300px, 40vw, 500px);
+          height: clamp(300px, 40vw, 500px);
+          background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
+          pointer-events: none;
+        }
+        .grid-bg {
+          position: absolute; inset: 0;
+          opacity: 0.035;
+          background-image:
+            linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px);
+          background-size: 48px 48px;
+          pointer-events: none;
+        }
+        .left-logo {
+          display: flex; align-items: center; gap: 12px;
+          position: relative; z-index: 1;
+        }
+        .left-logo-icon {
+          width: clamp(36px, 3vw, 42px);
+          height: clamp(36px, 3vw, 42px);
+          background: #7c3aed;
+          border-radius: 10px;
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0;
+        }
+        .left-logo-text {
+          font-size: clamp(16px, 1.4vw, 20px);
+          font-weight: 700; color: #fff;
+          letter-spacing: -0.3px;
+        }
+        .left-center { position: relative; z-index: 1; }
+        .left-headline {
+          font-size: clamp(2rem, 3.2vw, 3.5rem);
+          font-weight: 800; color: #fff;
+          line-height: 1.12;
+          letter-spacing: -1.5px;
+          margin-bottom: clamp(1rem, 2vw, 1.4rem);
+        }
+        .left-headline span { color: #a78bfa; }
+        .left-desc {
+          font-size: clamp(13px, 1vw, 15px);
+          color: #71717a; line-height: 1.75;
+          max-width: 400px;
+          margin-bottom: clamp(1.8rem, 3vw, 2.8rem);
+          font-weight: 300;
+        }
+        .features { display: flex; flex-direction: column; gap: 14px; }
+        .feature { display: flex; align-items: center; gap: 14px; }
+        .feature-icon {
+          width: clamp(32px, 2.5vw, 40px);
+          height: clamp(32px, 2.5vw, 40px);
+          border-radius: 10px;
+          background: rgba(124,58,237,0.1);
+          border: 1px solid rgba(124,58,237,0.2);
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0;
+          font-size: clamp(14px, 1.2vw, 17px);
+        }
+        .feature-text {
+          font-size: clamp(12.5px, 0.9vw, 14px);
+          color: #a1a1aa;
+        }
+        .left-footer {
+          font-size: 11px; color: #3f3f46;
+          position: relative; z-index: 1;
+        }
 
-      <button
-        onClick={handleGoogle}
-        disabled={googleLoading || loading}
-        className="w-full flex items-center justify-center gap-3 rounded-xl h-11 text-sm font-medium transition-all duration-200 disabled:opacity-50"
-        style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "white" }}
-        onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.10)")}
-        onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
-      >
-        {googleLoading ? (
-          <svg className="w-4 h-4 animate-spin" style={{ color: "#a1a1aa" }} viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-        ) : (
-          <svg viewBox="0 0 24 24" className="w-5 h-5"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-        )}
-        {googleLoading ? "Redirecting…" : "Continue with Google"}
-      </button>
+        /* RIGHT PANEL */
+        .login-right {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: clamp(2rem, 4vw, 4rem) clamp(1.5rem, 4vw, 5rem);
+          min-height: 100vh;
+        }
+        .login-card { width: 100%; max-width: 430px; }
+        .mobile-logo {
+          display: none;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 2rem;
+        }
+        .mobile-logo-icon {
+          width: 30px; height: 30px;
+          background: #7c3aed; border-radius: 7px;
+          display: flex; align-items: center; justify-content: center;
+        }
+        .mobile-logo-text { font-size: 15px; font-weight: 700; color: #fff; }
+        .login-title {
+          font-size: clamp(1.5rem, 2vw, 2rem);
+          font-weight: 700; color: #fff;
+          letter-spacing: -0.5px; margin-bottom: 6px;
+        }
+        .login-sub { font-size: 13.5px; color: #71717a; margin-bottom: 1.8rem; }
 
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.08)" }} />
-        <span className="text-xs" style={{ color: "#52525b" }}>or sign in with email</span>
-        <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.08)" }} />
-      </div>
+        .error-box {
+          display: flex; align-items: flex-start; gap: 10px;
+          background: rgba(239,68,68,0.08);
+          border: 1px solid rgba(239,68,68,0.2);
+          border-radius: 10px;
+          padding: 12px 14px;
+          margin-bottom: 1.2rem;
+        }
+        .error-text { font-size: 13px; color: #f87171; }
 
-      <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium" style={{ color: "#d4d4d8" }}>Email address</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-xl px-4 h-11 text-sm text-white placeholder-zinc-600 outline-none transition-all"
-            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.10)" }}
-            onFocus={e => (e.currentTarget.style.border = "1px solid rgba(139,92,246,0.6)")}
-            onBlur={e => (e.currentTarget.style.border = "1px solid rgba(255,255,255,0.10)")}
-            placeholder="you@example.com"
-            required
-            autoComplete="off"
-          />
-        </div>
+        .google-btn {
+          width: 100%;
+          display: flex; align-items: center; justify-content: center; gap: 10px;
+          height: 46px;
+          border-radius: 10px;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.1);
+          color: #e4e4e7;
+          font-size: 13.5px; font-weight: 500;
+          cursor: pointer;
+          transition: background 0.15s, border-color 0.15s;
+          font-family: 'Sora', sans-serif;
+          margin-bottom: 1.5rem;
+        }
+        .google-btn:hover:not(:disabled) {
+          background: rgba(255,255,255,0.09);
+          border-color: rgba(255,255,255,0.18);
+        }
+        .google-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium" style={{ color: "#d4d4d8" }}>Password</label>
+        .divider {
+          display: flex; align-items: center; gap: 12px;
+          margin-bottom: 1.4rem;
+        }
+        .divider-line { flex: 1; height: 1px; background: rgba(255,255,255,0.07); }
+        .divider-text { font-size: 11.5px; color: #52525b; white-space: nowrap; }
+
+        .field { margin-bottom: 1rem; }
+        .field-label {
+          display: block; font-size: 12.5px;
+          font-weight: 500; color: #d4d4d8; margin-bottom: 6px;
+        }
+        .field-input {
+          width: 100%; height: 46px;
+          padding: 0 14px;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.09);
+          border-radius: 10px;
+          color: #fff; font-size: 13.5px;
+          font-family: 'Sora', sans-serif;
+          outline: none;
+          transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .field-input::placeholder { color: #52525b; }
+        .field-input:focus {
+          border-color: rgba(124,58,237,0.55);
+          box-shadow: 0 0 0 3px rgba(124,58,237,0.08);
+        }
+        .pw-wrap { position: relative; }
+        .pw-wrap .field-input { padding-right: 46px; }
+        .eye-btn {
+          position: absolute; right: 12px; top: 50%;
+          transform: translateY(-50%);
+          background: none; border: none; cursor: pointer;
+          color: #52525b; display: flex; padding: 4px;
+          transition: color 0.12s;
+        }
+        .eye-btn:hover { color: #a1a1aa; }
+
+        .submit-btn {
+          width: 100%; height: 46px;
+          background: #7c3aed; color: #fff;
+          border: none; border-radius: 10px;
+          font-size: 14px; font-weight: 600;
+          cursor: pointer;
+          font-family: 'Sora', sans-serif;
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+          transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+          margin-top: 1.2rem;
+        }
+        .submit-btn:hover:not(:disabled) {
+          background: #6d28d9;
+          transform: translateY(-1px);
+          box-shadow: 0 6px 20px rgba(124,58,237,0.35);
+        }
+        .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .register-line {
+          text-align: center; font-size: 13px;
+          color: #71717a; margin-top: 1.5rem;
+        }
+        .register-line a {
+          color: #a78bfa; font-weight: 500; text-decoration: none;
+        }
+        .register-line a:hover { color: #c4b5fd; }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+          .login-left { width: 42%; padding: 2.5rem 2.5rem; }
+          .left-headline { letter-spacing: -1px; }
+        }
+        @media (max-width: 768px) {
+          .login-left { display: none; }
+          .login-right {
+            align-items: flex-start;
+            padding: 2.5rem 1.5rem;
+          }
+          .mobile-logo { display: flex; }
+          .login-card { max-width: 100%; }
+        }
+        @media (max-width: 400px) {
+          .login-right { padding: 2rem 1.2rem; }
+        }
+        @media (min-width: 1440px) {
+          .login-left { padding: 5rem 6rem; }
+          .login-right { padding: 4rem 6rem; }
+          .login-card { max-width: 460px; }
+        }
+        @media (min-width: 1920px) {
+          .login-left { width: 45%; }
+          .login-card { max-width: 500px; }
+        }
+      `}</style>
+
+      <div className="login-root">
+        {/* LEFT */}
+        <div className="login-left">
+          <div className="grid-bg" />
+          <div className="left-logo">
+            <div className="left-logo-icon">
+              <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+                <path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <span className="left-logo-text">DocChat</span>
           </div>
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl px-4 pr-11 h-11 text-sm text-white placeholder-zinc-600 outline-none transition-all"
-              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.10)" }}
-              onFocus={e => (e.currentTarget.style.border = "1px solid rgba(139,92,246,0.6)")}
-              onBlur={e => (e.currentTarget.style.border = "1px solid rgba(255,255,255,0.10)")}
-              placeholder="••••••••"
-              required
-              autoComplete="new-password"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
-              style={{ color: "#71717a" }}
-            >
-              {showPassword ? (
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><path d="M1 1l22 22" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+
+          <div className="left-center">
+            <h2 className="left-headline">
+              Chat with your<br />
+              <span>documents</span><br />
+              instantly.
+            </h2>
+            <p className="left-desc">
+              Upload PDFs, Word docs, or any file — and get instant, accurate answers powered by AI. No more searching through pages.
+            </p>
+            <div className="features">
+              {[
+                { icon: "⚡", text: "Instant answers from any document" },
+                { icon: "🔒", text: "Your data stays private and secure" },
+                { icon: "🧠", text: "AI that understands context deeply" },
+              ].map((f) => (
+                <div key={f.text} className="feature">
+                  <div className="feature-icon">{f.icon}</div>
+                  <span className="feature-text">{f.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <p className="left-footer">© {new Date().getFullYear()} DocChat. All rights reserved.</p>
+        </div>
+
+        {/* RIGHT */}
+        <div className="login-right">
+          <div className="login-card">
+            <div className="mobile-logo">
+              <div className="mobile-logo-icon">
+                <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                  <path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <span className="mobile-logo-text">DocChat</span>
+            </div>
+
+            <h1 className="login-title">Welcome back</h1>
+            <p className="login-sub">Sign in to your account to continue...</p>
+
+            {error && (
+              <div className="error-box">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
+                  <circle cx="12" cy="12" r="10" stroke="#f87171" strokeWidth="1.8"/>
+                  <path d="M12 8v4m0 4h.01" stroke="#f87171" strokeWidth="1.8" strokeLinecap="round"/>
+                </svg>
+                <span className="error-text">{error}</span>
+              </div>
+            )}
+
+            <button className="google-btn" onClick={handleGoogle} disabled={googleLoading || loading}>
+              {googleLoading ? (
+                <svg className="spin" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="#71717a" strokeWidth="4" opacity="0.3"/>
+                  <path d="M12 2a10 10 0 0 1 10 10" stroke="#71717a" strokeWidth="4" strokeLinecap="round"/>
+                </svg>
               ) : (
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="1.8"/><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8"/></svg>
+                <svg viewBox="0 0 24 24" width="18" height="18">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
               )}
+              {googleLoading ? "Redirecting…" : "Continue with Google"}
             </button>
+
+            <div className="divider">
+              <div className="divider-line" />
+              <span className="divider-text">or sign in with email</span>
+              <div className="divider-line" />
+            </div>
+
+            <form onSubmit={handleSubmit} autoComplete="off">
+              <div className="field">
+                <label className="field-label">Email address</label>
+                <input
+                  type="email"
+                  className="field-input"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="off"
+                />
+              </div>
+              <div className="field">
+                <label className="field-label">Password</label>
+                <div className="pw-wrap">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    className="field-input"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="new-password"
+                  />
+                  <button type="button" className="eye-btn" onClick={() => setShowPassword(!showPassword)}>
+                    {showPassword ? (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                        <path d="M1 1l22 22"/>
+                      </svg>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <button type="submit" className="submit-btn" disabled={loading || googleLoading}>
+                {loading ? (
+                  <>
+                    <svg className="spin" width="15" height="15" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.25)" strokeWidth="4"/>
+                      <path d="M12 2a10 10 0 0 1 10 10" stroke="#fff" strokeWidth="4" strokeLinecap="round"/>
+                    </svg>
+                    Signing in…
+                  </>
+                ) : "Sign in to DocChat"}
+              </button>
+            </form>
+
+            <p className="register-line">
+              Don&apos;t have an account?{" "}
+              <Link href="/register">Create one free</Link>
+            </p>
           </div>
         </div>
-
-        <button
-          type="submit"
-          disabled={loading || googleLoading}
-          className="w-full h-11 text-white rounded-xl text-sm font-semibold transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
-          style={{ background: "#7c3aed" }}
-          onMouseEnter={e => { if (!loading && !googleLoading) e.currentTarget.style.background = "#6d28d9" }}
-          onMouseLeave={e => (e.currentTarget.style.background = "#7c3aed")}
-        >
-          {loading ? (
-            <><svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Signing in…</>
-          ) : "Sign in"}
-        </button>
-      </form>
-
-      <p className="text-center text-sm" style={{ color: "#71717a" }}>
-        Don&apos;t have an account?{" "}
-        <Link href="/register" className="font-medium transition-colors" style={{ color: "#a78bfa" }}>Create one free</Link>
-      </p>
-    </div>
+      </div>
+    </>
   )
 }
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex" style={{ background: "#0f0f12" }}>
-      {/* Left branding panel */}
-      <div className="hidden lg:flex lg:w-[42%] flex-col justify-between p-12 relative overflow-hidden" style={{ background: "#0a0a0d" }}>
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-[-120px] left-[-80px] w-96 h-96 rounded-full blur-3xl" style={{ background: "rgba(139,92,246,0.18)" }} />
-          <div className="absolute bottom-[-60px] right-[-60px] w-80 h-80 rounded-full blur-3xl" style={{ background: "rgba(99,102,241,0.12)" }} />
-        </div>
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
-
-        <div className="relative z-10 flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#7c3aed" }}>
-            <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          </div>
-          <span className="text-white font-semibold text-lg tracking-tight">DocChat</span>
-        </div>
-
-        <div className="relative z-10 space-y-6">
-          <div className="space-y-3">
-            <h2 className="text-4xl font-bold text-white leading-tight tracking-tight">
-              Chat with your<br />
-              <span style={{ color: "#a78bfa" }}>documents</span> instantly.
-            </h2>
-            <p className="text-sm leading-relaxed max-w-xs" style={{ color: "#a1a1aa" }}>
-              Upload PDFs, Word docs, or any file — and get instant, accurate answers powered by AI.
-            </p>
-          </div>
-          <div className="space-y-3 pt-2">
-            {[
-              { icon: "⚡", label: "Instant answers from any document" },
-              { icon: "🔒", label: "Your data stays private and secure" },
-              { icon: "🧠", label: "AI that understands context deeply" },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center gap-3">
-                <span>{item.icon}</span>
-                <span className="text-sm" style={{ color: "#d4d4d8" }}>{item.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <p className="relative z-10 text-xs" style={{ color: "#52525b" }}>© {new Date().getFullYear()} DocChat. All rights reserved.</p>
+    <Suspense fallback={
+      <div style={{ minHeight: "100vh", background: "#080810", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <svg style={{ animation: "spin 0.8s linear infinite" }} width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="#7c3aed" strokeWidth="4" opacity="0.25"/>
+          <path d="M12 2a10 10 0 0 1 10 10" stroke="#7c3aed" strokeWidth="4" strokeLinecap="round"/>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </svg>
       </div>
-
-      {/* Right form panel */}
-      <div className="flex-1 flex items-center justify-center p-6">
-        <Suspense fallback={
-          <div className="w-full max-w-md flex items-center justify-center">
-            <svg className="w-6 h-6 animate-spin" style={{ color: "#7c3aed" }} viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-            </svg>
-          </div>
-        }>
-          <LoginForm />
-        </Suspense>
-      </div>
-    </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }
