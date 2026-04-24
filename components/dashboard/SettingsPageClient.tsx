@@ -226,12 +226,12 @@ export default function SettingsPageClient({ user }: Props) {
   // ── Delete account ─────────────────────────────────────────────────────────
   const [showDeleteModal, setShowDeleteModal]     = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState("")
-  const [deletePassword, setDeletePassword]       = useState("")
+ 
   const [deleteErr, setDeleteErr]                 = useState("")
   const [deleteLoading, setDeleteLoading]         = useState(false)
 
   function closeDeleteModal() {
-    setShowDeleteModal(false); setDeleteConfirmText(""); setDeletePassword(""); setDeleteErr("")
+    setShowDeleteModal(false); setDeleteConfirmText("");  setDeleteErr("")
   }
 
   async function deleteAccount() {
@@ -240,7 +240,7 @@ export default function SettingsPageClient({ user }: Props) {
     setDeleteLoading(true)
     const res = await fetch("/api/settings", {
       method: "DELETE", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ confirmText: deleteConfirmText, password: deletePassword }),
+      body: JSON.stringify({ confirmText: deleteConfirmText }),
     })
     const data = await res.json()
     setDeleteLoading(false)
@@ -686,7 +686,7 @@ export default function SettingsPageClient({ user }: Props) {
               </div>
 
               {/* Password */}
-              <div style={{ marginBottom: 14 }}>
+              {/* <div style={{ marginBottom: 14 }}>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 6 }}>Your password</label>
                 <input
                   type="password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)}
@@ -695,7 +695,7 @@ export default function SettingsPageClient({ user }: Props) {
                   onFocus={e => (e.currentTarget.style.borderColor = "#EF4444")}
                   onBlur={e => (e.currentTarget.style.borderColor = "#E2E8F0")}
                 />
-              </div>
+              </div> */}
 
               {/* Type DELETE */}
               <div style={{ marginBottom: 18 }}>
@@ -728,12 +728,14 @@ export default function SettingsPageClient({ user }: Props) {
                 </button>
                 <button
                   onClick={deleteAccount}
-                  disabled={deleteLoading || deleteConfirmText !== "DELETE" || !deletePassword}
+                  disabled={deleteLoading || deleteConfirmText !== "DELETE"}
                   style={{
                     flex: 1, padding: "11px 0", borderRadius: 10,
-                    background: deleteConfirmText === "DELETE" && deletePassword && !deleteLoading ? "#DC2626" : "#FCA5A5",
+                    // background: deleteConfirmText === "DELETE" && deletePassword && !deleteLoading ? "#DC2626" : "#FCA5A5",
+                    background: deleteConfirmText === "DELETE" && !deleteLoading ? "#DC2626" : "#FCA5A5",
                     color: "#fff", fontSize: 13, fontWeight: 700, border: "none",
-                    cursor: deleteConfirmText === "DELETE" && deletePassword && !deleteLoading ? "pointer" : "not-allowed",
+                    // cursor: deleteConfirmText === "DELETE" && deletePassword && !deleteLoading ? "pointer" : "not-allowed",
+                    cursor: deleteConfirmText === "DELETE" && !deleteLoading ? "pointer" : "not-allowed",
                     fontFamily: "inherit", transition: "background .15s",
                     display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                   }}

@@ -89,7 +89,7 @@ export async function DELETE(req: Request) {
 
   try {
     const body = await req.json()
-    const { confirmText, password } = body
+    const { confirmText} = body
 
     // ── Require typing "DELETE" to confirm ────────────────────────────────
     if (confirmText !== "DELETE") {
@@ -100,15 +100,7 @@ export async function DELETE(req: Request) {
     const user = await prisma.user.findUnique({ where: { id: session.user.id } })
     if (!user) return NextResponse.json({ error: "User not found." }, { status: 404 })
 
-    if (user.password) {
-      if (!password) {
-        return NextResponse.json({ error: "Please enter your password to confirm deletion." }, { status: 400 })
-      }
-      const valid = await bcrypt.compare(password, user.password)
-      if (!valid) {
-        return NextResponse.json({ error: "Incorrect password." }, { status: 400 })
-      }
-    }
+ 
 
     // ── Get all workspaces for this user ──────────────────────────────────
     const workspaces = await prisma.workspace.findMany({
