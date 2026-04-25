@@ -431,8 +431,10 @@
     // ── Panel ──
     "#dc-panel {",
     "  pointer-events: all !important;",
-    "  width: 380px !important;",
-    "  height: 580px !important;",
+    // "  width: 380px !important;",
+    // "  height: 580px !important;",
+    "  width: 420px !important;",
+"  height: 650px !important;",
     "  max-height: calc(100vh - 120px) !important;",
     "  border-radius: 20px !important;",
     "  overflow: hidden !important;",
@@ -476,7 +478,9 @@
     "#dc-header-close:hover { background:rgba(255,255,255,0.28) !important; }",
 
     // ── Messages ──
-    "#dc-messages { flex:1 !important; overflow-y:auto !important; overflow-x:hidden !important; padding:20px 18px !important; display:flex !important; flex-direction:column !important; gap:8px !important; background:#fff !important; scroll-behavior:smooth !important; min-height:0 !important; }",
+    // "#dc-messages { flex:1 !important; overflow-y:auto !important; overflow-x:hidden !important; padding:20px 18px !important; display:flex !important; flex-direction:column !important; gap:8px !important; background:#fff !important; scroll-behavior:smooth !important; min-height:0 !important; }",
+    "#dc-messages { flex:1 !important; overflow-y:auto !important; overflow-x:hidden !important; padding:20px 20px !important; display:flex !important; flex-direction:column !important; gap:8px !important; background:#fff !important; scroll-behavior:smooth !important; min-height:0 !important; }",
+  
     "#dc-messages::-webkit-scrollbar { width:4px !important; }",
     "#dc-messages::-webkit-scrollbar-track { background:transparent !important; }",
     "#dc-messages::-webkit-scrollbar-thumb { background:#D1D5DB !important; border-radius:4px !important; }",
