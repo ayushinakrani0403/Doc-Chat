@@ -10,6 +10,7 @@ type Workspace = {
   color: string
   welcomeMsg: string
   position: string
+   size: string
 }
 
 type Props = {
@@ -45,8 +46,11 @@ export default function EmbedPageClient({ workspaces, appUrl }: Props) {
   const [saving, setSaving]             = useState(false)
   const [toast, setToast]               = useState("")
   const [toastVisible, setToastVisible] = useState(false)
-
   const selectedWs = workspaces.find((w) => w.id === selectedId)
+  // const [size, setSize] = useState("medium")
+  const [size, setSize] = useState(workspaces[0]?.size || "medium")
+  const previewWidth = size === "small" ? 170 : size === "large" ? 250 : 210
+const previewHeight = size === "small" ? 100 : size === "large" ? 160 : 130 
 
   // useEffect(() => {
   //   if (!selectedWs) return
@@ -62,6 +66,7 @@ useEffect(() => {
     setColor(selectedWs.color)
     setPosition(selectedWs.position || "bottom-right")
     setWelcomeMsg(selectedWs.welcomeMsg || "Hi! How can I help you today?")
+    setSize(selectedWs.size || "medium")
   }, 0)
   return () => clearTimeout(timer)
 }, [selectedId])
@@ -72,7 +77,8 @@ useEffect(() => {
     setTimeout(() => setToastVisible(false), 2500)
   }
 
-  const snippet = `<script\n  src="${appUrl}/embed.js"\n  data-workspace="${selectedWs?.slug ?? ""}"\n  data-color="${color}"\n  data-position="${position}"\n  data-welcome="${welcomeMsg}"\n  defer\n><\/script>`
+  // const snippet = `<script\n  src="${appUrl}/embed.js"\n  data-workspace="${selectedWs?.slug ?? ""}"\n  data-color="${color}"\n  data-position="${position}"\n  data-welcome="${welcomeMsg}"\n  defer\n><\/script>`
+const snippet = `<script\n  src="${appUrl}/embed.js"\n  data-workspace="${selectedWs?.slug ?? ""}"\n  data-color="${color}"\n  data-position="${position}"\n  data-welcome="${welcomeMsg}"\n  data-size="${size}"\n  defer\n><\/script>`
 
   function copySnippet() {
     navigator.clipboard?.writeText(snippet)
@@ -87,7 +93,7 @@ useEffect(() => {
     const res = await fetch(`/api/workspace/${selectedId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ color, position, welcomeMsg }),
+      body: JSON.stringify({ color, position, welcomeMsg , size }),
     })
     setSaving(false)
     showToast(res.ok ? "Widget settings saved!" : "Failed to save settings")
@@ -234,6 +240,37 @@ useEffect(() => {
                 <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 4 }}>First message users see when they open the widget</p>
               </div>
 
+            {/* Widget size */}
+              <div style={{ marginBottom: 22 }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 8 }}>
+                  Widget size
+                </label>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6 }}>
+                  {[
+
+                  { value: "small",  label: "Small",  desc: "400 × 480px" },
+                  { value: "medium", label: "Medium", desc: "460 × 580px" },
+                  { value: "large",  label: "Large",  desc: "540 × 680px" },
+                    
+                  ].map((s) => (
+                    <button
+                      key={s.value}
+                      onClick={() => setSize(s.value)}
+                      style={{
+                        padding: "9px 6px", borderRadius: 9, textAlign: "center" as const,
+                        border: `1.5px solid ${size === s.value ? color : "#E2E8F0"}`,
+                        background: size === s.value ? color + "12" : "#fff",
+                        color: size === s.value ? color : "#64748B",
+                        cursor: "pointer", fontFamily: "inherit", transition: "all .15s",
+                      }}
+                    >
+                      <div style={{ fontSize: 13, fontWeight: size === s.value ? 700 : 500 }}>{s.label}</div>
+                      <div style={{ fontSize: 10, marginTop: 2, color: size === s.value ? color : "#94A3B8" }}>{s.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+                  
               {/* Save */}
               <button
                 onClick={saveSettings}
@@ -282,6 +319,7 @@ useEffect(() => {
                 {"  "}<span style={{ color: "#86EFAC" }}>data-color</span><span style={{ color: "#fff" }}>=</span><span style={{ color: "#FCD34D" }}>"{color}"</span>{"\n"}
                 {"  "}<span style={{ color: "#86EFAC" }}>data-position</span><span style={{ color: "#fff" }}>=</span><span style={{ color: "#FCD34D" }}>"{position}"</span>{"\n"}
                 {"  "}<span style={{ color: "#86EFAC" }}>data-welcome</span><span style={{ color: "#fff" }}>=</span><span style={{ color: "#FCD34D" }}>"{welcomeMsg}"</span>{"\n"}
+                {"  "}<span style={{ color: "#86EFAC" }}>data-size</span><span style={{ color: "#fff" }}>=</span><span style={{ color: "#FCD34D" }}>"{size}"</span>{"\n"}
                 {"  "}<span style={{ color: "#86EFAC" }}>defer</span>{"\n"}
                 <span style={{ color: "#F472B6" }}>&gt;&lt;/script&gt;</span>
               </pre>
@@ -329,10 +367,13 @@ useEffect(() => {
                     <div style={{ height: 8, background: "#E2E8F0", borderRadius: 4, width: "45%" }} />
 
                     {/* Widget preview */}
+                    
                     <div style={{
                       position: "absolute", bottom: 12,
                       ...(position === "bottom-left" ? { left: 12 } : position === "bottom-center" ? { left: "50%", transform: "translateX(-50%)" } : { right: 12 }),
-                      width: 210,
+                      // width: 210,
+                      width: previewWidth,              // ← changes on size click!
+                      transition: "width 0.3s ease",   // ← smooth animation!
                       boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
                       borderRadius: 12,
                       overflow: "hidden",
@@ -352,7 +393,7 @@ useEffect(() => {
                       </div>
 
                       {/* Widget body */}
-                      <div style={{ background: "#fff", padding: 10, borderLeft: "1px solid #E2E8F0", borderRight: "1px solid #E2E8F0" }}>
+                      <div style={{ background: "#fff", padding: 10, minHeight: previewHeight,   transition: "min-height 0.3s ease", borderLeft: "1px solid #E2E8F0", borderRight: "1px solid #E2E8F0" }}>
                         <div style={{ background: "#F1F5F9", borderRadius: "8px 8px 8px 2px", padding: "6px 9px", fontSize: 10, color: "#0F172A", lineHeight: 1.5 }}>
                           {welcomeMsg || "Hi! How can I help you today?"}
                         </div>

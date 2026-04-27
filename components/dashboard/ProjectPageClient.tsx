@@ -14,6 +14,7 @@ type Workspace = {
   model: string
   temperature: number
   welcomeMsg: string
+  size: string
   docCount: number
   chatCount: number
 }
@@ -90,7 +91,9 @@ export default function ProjectPageClient({ workspace, documents: initialDocs, c
   // Add this with your other state declarations
   const [searchQuery, setSearchQuery] = useState("")
 
-  const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https://yourdomain.com"}/embed.js"\n  data-workspace="${workspace.slug}"\n  data-color="${workspace.color}"\n  data-position="bottom-right"\n  data-welcome="${settingsWelcome || "Hi! How can I help you today?"}"\n  defer\n><\/script>`
+  // const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https://yourdomain.com"}/embed.js"\n  data-workspace="${workspace.slug}"\n  data-color="${workspace.color}"\n  data-position="bottom-right"\n  data-welcome="${settingsWelcome || "Hi! How can I help you today?"}"\n  defer\n><\/script>`
+
+  const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https://yourdomain.com"}/embed.js"\n  data-workspace="${workspace.slug}"\n  data-color="${workspace.color}"\n  data-position="bottom-right"\n  data-welcome="${settingsWelcome || "Hi! How can I help you today?"}"\n  data-size="${workspace.size || "medium"}"\n  defer\n><\/script>`
 
   function showToast(msg: string) {
     setToast(msg)
@@ -376,9 +379,13 @@ export default function ProjectPageClient({ workspace, documents: initialDocs, c
                 Copy snippet
               </button>
             </div>
-            <pre style={{ color: "#7DD3FC", fontSize: 12, fontFamily: "'Fira Code', monospace", padding: "14px 16px", lineHeight: 1.7, overflowX: "auto", margin: 0 }}>
+
+            {/* <pre style={{ color: "#7DD3FC", fontSize: 12, fontFamily: "'Fira Code', monospace", padding: "14px 16px", lineHeight: 1.7, overflowX: "auto", margin: 0 }}>
               {`<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https://yourdomain.com"}/embed.js"\n  data-workspace="`}<span style={{ color: "#FCD34D" }}>{workspace.slug}</span>{`"\n  data-color="`}<span style={{ color: "#FCD34D" }}>{workspace.color}</span>{`"\n  data-position="`}<span style={{ color: "#FCD34D" }}>bottom-right</span>{`"\n  data-welcome="`}<span style={{ color: "#FCD34D" }}>{settingsWelcome || "Hi! How can I help you today?"}</span>{`"\n  defer\n></script>`}
-            </pre>
+            </pre> */}
+          <pre style={{ color: "#7DD3FC", fontSize: 12, fontFamily: "'Fira Code', monospace", padding: "14px 16px", lineHeight: 1.7, overflowX: "auto", margin: 0 }}>
+            {`<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https://yourdomain.com"}/embed.js"\n  data-workspace="`}<span style={{ color: "#FCD34D" }}>{workspace.slug}</span>{`"\n  data-color="`}<span style={{ color: "#FCD34D" }}>{workspace.color}</span>{`"\n  data-position="`}<span style={{ color: "#FCD34D" }}>bottom-right</span>{`"\n  data-welcome="`}<span style={{ color: "#FCD34D" }}>{settingsWelcome || "Hi! How can I help you today?"}</span>{`"\n  data-size="`}<span style={{ color: "#FCD34D" }}>{workspace.size || "medium"}</span>{`"\n  defer\n></script>`}
+          </pre>
           </div>
 
           <div style={{ display: "flex", gap: 8 }}>

@@ -96,7 +96,7 @@ export async function PATCH(
 
   try {
     const body = await req.json()
-    const { name, systemPrompt, model, temperature, welcomeMsg, color, position } = body
+    const { name, systemPrompt, model, temperature, welcomeMsg, color, position , size} = body
 
     // Verify ownership
     const workspace = await prisma.workspace.findFirst({
@@ -115,6 +115,7 @@ export async function PATCH(
         ...(welcomeMsg  !== undefined && { welcomeMsg }),
         ...(color             && { color }),
         ...(position          && { position }),
+        ...(size !== undefined && { size }), 
       },
     })
 

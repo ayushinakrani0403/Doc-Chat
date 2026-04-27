@@ -84,6 +84,7 @@ export default async function ProjectPage({
         model: workspace.model ?? "gpt-4o-mini",
         temperature: workspace.temperature,
         welcomeMsg: workspace.welcomeMsg ?? "",
+        size: workspace.size ?? "medium",
         docCount: workspace._count.documents,
         chatCount: workspace._count.chatLogs,
       }}
