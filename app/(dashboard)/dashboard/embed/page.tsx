@@ -15,6 +15,7 @@ export default async function EmbedPage() {
       color: true,
       welcomeMsg: true,
       position: true,
+      size: true,
       
     },
     orderBy: { createdAt: "desc" },
@@ -29,6 +30,7 @@ export default async function EmbedPage() {
         color: w.color,
         welcomeMsg: w.welcomeMsg ?? "",
         position: w.position ?? "bottom-right",
+         size: w.size ?? "medium",
       }))}
       appUrl={process.env.NEXT_PUBLIC_APP_URL ?? "https://yourdomain.com"}
     />
