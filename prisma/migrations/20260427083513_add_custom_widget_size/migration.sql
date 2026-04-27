@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Workspace" ADD COLUMN     "customHeight" INTEGER NOT NULL DEFAULT 580,
+ADD COLUMN     "customWidth" INTEGER NOT NULL DEFAULT 460;

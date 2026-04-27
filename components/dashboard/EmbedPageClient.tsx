@@ -11,6 +11,8 @@ type Workspace = {
   welcomeMsg: string
   position: string
    size: string
+   customWidth: number   
+  customHeight: number  
 }
 
 type Props = {
@@ -46,18 +48,39 @@ export default function EmbedPageClient({ workspaces, appUrl }: Props) {
   const [saving, setSaving]             = useState(false)
   const [toast, setToast]               = useState("")
   const [toastVisible, setToastVisible] = useState(false)
-  const selectedWs = workspaces.find((w) => w.id === selectedId)
-  // const [size, setSize] = useState("medium")
-  const [size, setSize] = useState(workspaces[0]?.size || "medium")
-  const previewWidth = size === "small" ? 170 : size === "large" ? 250 : 210
-const previewHeight = size === "small" ? 100 : size === "large" ? 160 : 130 
 
-  // useEffect(() => {
-  //   if (!selectedWs) return
-  //   setColor(selectedWs.color)
-  //   setPosition(selectedWs.position || "bottom-right")
-  //   setWelcomeMsg(selectedWs.welcomeMsg || "Hi! How can I help you today?")
-  // }, [selectedId])
+  // const [customWidth, setCustomWidth]   = useState(workspaces[0]?.customWidth  ?? 460)
+  // const [customHeight, setCustomHeight] = useState(workspaces[0]?.customHeight ?? 580)
+const sizeDefaults: Record<string, { w: number; h: number }> = {
+  small:  { w: 400, h: 480 },
+  medium: { w: 460, h: 580 },
+  large:  { w: 540, h: 680 },
+}
+const _initSize = workspaces[0]?.size || "medium"
+const _initDims = sizeDefaults[_initSize] || sizeDefaults.medium
+const [customWidth,  setCustomWidth]  = useState(
+  (workspaces[0]?.customWidth  ?? 0) > 100 ? workspaces[0]!.customWidth  : _initDims.w
+)
+const [customHeight, setCustomHeight] = useState(
+  (workspaces[0]?.customHeight ?? 0) > 100 ? workspaces[0]!.customHeight : _initDims.h
+)
+
+
+  const selectedWs = workspaces.find((w) => w.id === selectedId)
+  const [size, setSize] = useState(workspaces[0]?.size || "medium")
+
+
+
+
+const previewWidth  = size === "small" ? 170 : size === "large" ? 250 : size === "custom" ? Math.round(customWidth / 2.2) : 210
+const previewHeight = size === "small" ? 100 : size === "large" ? 160 : size === "custom" ? Math.round(customHeight / 4.5) : 130
+
+const sizeMap: Record<string, { w: number; h: number }> = {
+  small:  { w: 400, h: 480 },
+  medium: { w: 460, h: 580 },
+  large:  { w: 540, h: 680 },
+}
+
 
   // ✅ Fix — wrap in setTimeout to avoid synchronous setState in effect
 useEffect(() => {
@@ -67,6 +90,18 @@ useEffect(() => {
     setPosition(selectedWs.position || "bottom-right")
     setWelcomeMsg(selectedWs.welcomeMsg || "Hi! How can I help you today?")
     setSize(selectedWs.size || "medium")
+
+
+ // ✅ Use preset values if DB has invalid values
+    const sizeDefaults: Record<string, { w: number; h: number }> = {
+      small:  { w: 400, h: 480 },
+      medium: { w: 460, h: 580 },
+      large:  { w: 540, h: 680 },
+    }
+    const dims = sizeDefaults[selectedWs.size || "medium"] || sizeDefaults.medium
+    setCustomWidth((selectedWs.customWidth   ?? 0) > 100 ? selectedWs.customWidth  : dims.w)
+    setCustomHeight((selectedWs.customHeight ?? 0) > 100 ? selectedWs.customHeight : dims.h)
+
   }, 0)
   return () => clearTimeout(timer)
 }, [selectedId])
@@ -77,8 +112,19 @@ useEffect(() => {
     setTimeout(() => setToastVisible(false), 2500)
   }
 
-  // const snippet = `<script\n  src="${appUrl}/embed.js"\n  data-workspace="${selectedWs?.slug ?? ""}"\n  data-color="${color}"\n  data-position="${position}"\n  data-welcome="${welcomeMsg}"\n  defer\n><\/script>`
-const snippet = `<script\n  src="${appUrl}/embed.js"\n  data-workspace="${selectedWs?.slug ?? ""}"\n  data-color="${color}"\n  data-position="${position}"\n  data-welcome="${welcomeMsg}"\n  data-size="${size}"\n  defer\n><\/script>`
+
+// const snippet = `<script\n  src="${appUrl}/embed.js"\n  data-workspace="${selectedWs?.slug ?? ""}"\n  data-color="${color}"\n  data-position="${position}"\n  data-welcome="${welcomeMsg}"\n  ${size === "custom" ? `data-width="${customWidth}"\n  data-height="${customHeight}"` : `data-size="${size}"`}\n  defer\n><\/script>`
+// ✅ Always use data-width and data-height
+const snippet = `<script
+  src="${appUrl}/embed.js"
+  data-workspace="${selectedWs?.slug ?? ""}"
+  data-color="${color}"
+  data-position="${position}"
+  data-welcome="${welcomeMsg}"
+  data-width="${customWidth}"
+  data-height="${customHeight}"
+  defer
+><\/script>`
 
   function copySnippet() {
     navigator.clipboard?.writeText(snippet)
@@ -93,7 +139,7 @@ const snippet = `<script\n  src="${appUrl}/embed.js"\n  data-workspace="${select
     const res = await fetch(`/api/workspace/${selectedId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ color, position, welcomeMsg , size }),
+      body: JSON.stringify({ color, position, welcomeMsg , size , customWidth, customHeight  }),
     })
     setSaving(false)
     showToast(res.ok ? "Widget settings saved!" : "Failed to save settings")
@@ -240,36 +286,71 @@ const snippet = `<script\n  src="${appUrl}/embed.js"\n  data-workspace="${select
                 <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 4 }}>First message users see when they open the widget</p>
               </div>
 
-            {/* Widget size */}
-              <div style={{ marginBottom: 22 }}>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 8 }}>
-                  Widget size
-                </label>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6 }}>
-                  {[
+            
+              {/* Widget size */}
+        <div style={{ marginBottom: 22 }}>
+          <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 8 }}>
+            Widget size
+          </label>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6, marginBottom: 10 }}>
+            {[
+              { value: "small",  label: "Small",  desc: "400 × 480px" },
+              { value: "medium", label: "Medium", desc: "460 × 580px" },
+              { value: "large",  label: "Large",  desc: "540 × 680px" },
+            ].map((s) => (
+              <button
+                key={s.value}
+                // onClick={() => setSize(s.value)}
+                onClick={() => {
+          setSize(s.value)
+          setCustomWidth(sizeMap[s.value].w)
+          setCustomHeight(sizeMap[s.value].h)
+        }}
+        style={{
+          padding: "9px 6px", borderRadius: 9, textAlign: "center" as const,
+          border: `1.5px solid ${size === s.value ? color : "#E2E8F0"}`,
+          background: size === s.value ? color + "12" : "#fff",
+          color: size === s.value ? color : "#64748B",
+          cursor: "pointer", fontFamily: "inherit", transition: "all .15s",
+        }}
+      >
+        <div style={{ fontSize: 13, fontWeight: size === s.value ? 700 : 500 }}>{s.label}</div>
+        <div style={{ fontSize: 10, marginTop: 2, color: size === s.value ? color : "#94A3B8" }}>{s.desc}</div>
+      </button>
+    ))}
+  </div>
 
-                  { value: "small",  label: "Small",  desc: "400 × 480px" },
-                  { value: "medium", label: "Medium", desc: "460 × 580px" },
-                  { value: "large",  label: "Large",  desc: "540 × 680px" },
-                    
-                  ].map((s) => (
-                    <button
-                      key={s.value}
-                      onClick={() => setSize(s.value)}
-                      style={{
-                        padding: "9px 6px", borderRadius: 9, textAlign: "center" as const,
-                        border: `1.5px solid ${size === s.value ? color : "#E2E8F0"}`,
-                        background: size === s.value ? color + "12" : "#fff",
-                        color: size === s.value ? color : "#64748B",
-                        cursor: "pointer", fontFamily: "inherit", transition: "all .15s",
-                      }}
-                    >
-                      <div style={{ fontSize: 13, fontWeight: size === s.value ? 700 : 500 }}>{s.label}</div>
-                      <div style={{ fontSize: 10, marginTop: 2, color: size === s.value ? color : "#94A3B8" }}>{s.desc}</div>
-                    </button>
-                  ))}
+              {/* Custom size inputs */}
+              <div style={{ background: "#F8FAFC", borderRadius: 8, padding: "10px 12px", border: "1px solid #E2E8F0" }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: "#475569", marginBottom: 8 }}>Or enter custom size</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  <div>
+                    <label style={{ fontSize: 11, color: "#64748B", marginBottom: 4, display: "block" }}>Width (px)</label>
+                    <input
+                      type="number"
+                      min={300} max={800} step={10}
+                      value={customWidth}
+                      onChange={(e) => { setCustomWidth(Number(e.target.value)); setSize("custom") }}
+                      style={{ width: "100%", padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, fontSize: 12, fontFamily: "inherit", outline: "none", boxSizing: "border-box" as const }}
+                      onFocus={(e) => (e.currentTarget.style.borderColor = color)}
+                      onBlur={(e) => (e.currentTarget.style.borderColor = "#E2E8F0")}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, color: "#64748B", marginBottom: 4, display: "block" }}>Height (px)</label>
+                    <input
+                      type="number"
+                      min={400} max={900} step={10}
+                      value={customHeight}
+                      onChange={(e) => { setCustomHeight(Number(e.target.value)); setSize("custom") }}
+                      style={{ width: "100%", padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, fontSize: 12, fontFamily: "inherit", outline: "none", boxSizing: "border-box" as const }}
+                      onFocus={(e) => (e.currentTarget.style.borderColor = color)}
+                      onBlur={(e) => (e.currentTarget.style.borderColor = "#E2E8F0")}
+                    />
+                  </div>
                 </div>
               </div>
+            </div>
                   
               {/* Save */}
               <button
@@ -319,7 +400,8 @@ const snippet = `<script\n  src="${appUrl}/embed.js"\n  data-workspace="${select
                 {"  "}<span style={{ color: "#86EFAC" }}>data-color</span><span style={{ color: "#fff" }}>=</span><span style={{ color: "#FCD34D" }}>"{color}"</span>{"\n"}
                 {"  "}<span style={{ color: "#86EFAC" }}>data-position</span><span style={{ color: "#fff" }}>=</span><span style={{ color: "#FCD34D" }}>"{position}"</span>{"\n"}
                 {"  "}<span style={{ color: "#86EFAC" }}>data-welcome</span><span style={{ color: "#fff" }}>=</span><span style={{ color: "#FCD34D" }}>"{welcomeMsg}"</span>{"\n"}
-                {"  "}<span style={{ color: "#86EFAC" }}>data-size</span><span style={{ color: "#fff" }}>=</span><span style={{ color: "#FCD34D" }}>"{size}"</span>{"\n"}
+                {"  "}<span style={{ color: "#86EFAC" }}>data-width</span><span style={{ color: "#fff" }}>=</span><span style={{ color: "#FCD34D" }}>"{customWidth}"</span>{"\n"}
+                {"  "}<span style={{ color: "#86EFAC" }}>data-height</span><span style={{ color: "#fff" }}>=</span><span style={{ color: "#FCD34D" }}>"{customHeight}"</span>{"\n"}
                 {"  "}<span style={{ color: "#86EFAC" }}>defer</span>{"\n"}
                 <span style={{ color: "#F472B6" }}>&gt;&lt;/script&gt;</span>
               </pre>

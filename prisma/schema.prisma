@@ -37,6 +37,8 @@ model Workspace {
   createdAt    DateTime   @default(now())
   documents    Document[]
   chatLogs     ChatLog[]
+  customWidth   Int     @default(460)   // ← add this
+  customHeight  Int     @default(580)   // ← add this
 }
 
 model Document {

@@ -16,13 +16,18 @@
   var BOT_NAME   = scriptTag.getAttribute("data-name")      || "AI Assistant";
   var API_URL    = (scriptTag.getAttribute("data-api-url")  || scriptTag.src.replace("/embed.js", "")) + "/api/chat";
   var SIZE = scriptTag.getAttribute("data-size") || "medium";
+  var CUSTOM_WIDTH  = parseInt(scriptTag.getAttribute("data-width")  || "0", 10);
+var CUSTOM_HEIGHT = parseInt(scriptTag.getAttribute("data-height") || "0", 10);
 
   var SIZES = {
     small:  { width: "400px", height: "480px" },
     medium: { width: "460px", height: "580px" },
     large:  { width: "540px", height: "680px" },
   };
-  var sz = SIZES[SIZE] || SIZES["medium"];
+  // var sz = SIZES[SIZE] || SIZES["medium"];
+  var sz = (CUSTOM_WIDTH && CUSTOM_HEIGHT)
+  ? { width: CUSTOM_WIDTH + "px", height: CUSTOM_HEIGHT + "px" }
+  : (SIZES[SIZE] || SIZES["medium"]);
 
   if (!WORKSPACE) {
     console.warn("[DocChat] data-workspace is required.");

@@ -85,6 +85,8 @@ export default async function ProjectPage({
         temperature: workspace.temperature,
         welcomeMsg: workspace.welcomeMsg ?? "",
         size: workspace.size ?? "medium",
+        customWidth: workspace.customWidth ?? 460,
+        customHeight: workspace.customHeight ?? 580,
         docCount: workspace._count.documents,
         chatCount: workspace._count.chatLogs,
       }}

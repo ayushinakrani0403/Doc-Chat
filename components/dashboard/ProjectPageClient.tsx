@@ -15,6 +15,8 @@ type Workspace = {
   temperature: number
   welcomeMsg: string
   size: string
+  customWidth: number
+  customHeight: number
   docCount: number
   chatCount: number
 }
@@ -91,9 +93,11 @@ export default function ProjectPageClient({ workspace, documents: initialDocs, c
   // Add this with your other state declarations
   const [searchQuery, setSearchQuery] = useState("")
 
-  // const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https://yourdomain.com"}/embed.js"\n  data-workspace="${workspace.slug}"\n  data-color="${workspace.color}"\n  data-position="bottom-right"\n  data-welcome="${settingsWelcome || "Hi! How can I help you today?"}"\n  defer\n><\/script>`
+  
 
-  const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https://yourdomain.com"}/embed.js"\n  data-workspace="${workspace.slug}"\n  data-color="${workspace.color}"\n  data-position="bottom-right"\n  data-welcome="${settingsWelcome || "Hi! How can I help you today?"}"\n  data-size="${workspace.size || "medium"}"\n  defer\n><\/script>`
+  // const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https://yourdomain.com"}/embed.js"\n  data-workspace="${workspace.slug}"\n  data-color="${workspace.color}"\n  data-position="bottom-right"\n  data-welcome="${settingsWelcome || "Hi! How can I help you today?"}"\n  data-size="${workspace.size || "medium"}"\n  defer\n><\/script>`
+
+const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https://yourdomain.com"}/embed.js"\n  data-workspace="${workspace.slug}"\n  data-color="${workspace.color}"\n  data-position="bottom-right"\n  data-welcome="${settingsWelcome || "Hi! How can I help you today?"}"\n  data-width="${workspace.customWidth || 380}"\n  data-height="${workspace.customHeight || 520}"\n  defer\n><\/script>`
 
   function showToast(msg: string) {
     setToast(msg)
@@ -263,100 +267,100 @@ export default function ProjectPageClient({ workspace, documents: initialDocs, c
             </ul>
           )} */}
 
-{/* Header with search */}
-<div style={{ padding: "12px 16px", borderBottom: "1px solid #E2E8F0", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-  <span style={{ fontSize: 13, color: "#475569", flexShrink: 0 }}>
-    {searchQuery ? `${docs.filter(d => d.filename.toLowerCase().includes(searchQuery.toLowerCase())).length} of ${docs.length} documents` : `${docs.length} documents`}
-  </span>
-  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-    {/* Search input */}
-    <div style={{ position: "relative" }}>
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2" strokeLinecap="round"
-        style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
-        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-      </svg>
-      <input
-        type="text"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        placeholder="Search documents…"
-        style={{
-          padding: "6px 28px 6px 28px", border: "1px solid #E2E8F0",
-          borderRadius: 8, fontSize: 12, fontFamily: "inherit",
-          color: "#0F172A", background: "#F8FAFC", outline: "none",
-          width: 180, boxSizing: "border-box" as const, transition: "border-color .15s",
-        }}
-        onFocus={e => e.currentTarget.style.borderColor = "#6366F1"}
-        onBlur={e => e.currentTarget.style.borderColor = "#E2E8F0"}
-      />
-      {searchQuery && (
-        <button onClick={() => setSearchQuery("")}
-          style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#94A3B8", padding: 0, display: "flex" }}>
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      )}
-    </div>
-    {/* Upload button */}
-    <Link href={`/dashboard/upload?slug=${workspace.slug}`}
-      style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 11px", borderRadius: 7, background: "#6366F1", color: "#fff", fontSize: 12, fontWeight: 600, textDecoration: "none", flexShrink: 0 }}>
-      + Upload
-    </Link>
-  </div>
-</div>
-
-{(() => {
-  const filtered = docs.filter(d => d.filename.toLowerCase().includes(searchQuery.toLowerCase()))
-  if (docs.length === 0) return (
-    <div style={{ padding: "48px 24px", textAlign: "center" }}>
-      <p style={{ fontSize: 13, color: "#94A3B8", marginBottom: 12 }}>No documents yet.</p>
-      <Link href={`/dashboard/upload?slug=${workspace.slug}`} style={{ fontSize: 13, color: "#6366F1", fontWeight: 600, textDecoration: "none" }}>
-        Upload your first document →
-      </Link>
-    </div>
-  )
-  if (filtered.length === 0) return (
-    <div style={{ padding: "40px 24px", textAlign: "center" }}>
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" style={{ margin: "0 auto 10px", display: "block" }}>
-        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-      </svg>
-      <p style={{ fontSize: 13, color: "#94A3B8", marginBottom: 8 }}>No results for <strong>{searchQuery}</strong></p>
-      <button onClick={() => setSearchQuery("")} style={{ fontSize: 12, color: "#6366F1", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
-        Clear search
-      </button>
-    </div>
-  )
-  return (
-    <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-      {filtered.map((doc) => (
-        <li key={doc.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: "1px solid #F8FAFC" }}>
-          <FileIcon filename={doc.filename} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{doc.filename}</div>
-            <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 1 }}>
-              {formatSize(doc.size)} · uploaded {new Date(doc.uploadedAt).toLocaleDateString()}
+          {/* Header with search */}
+          <div style={{ padding: "12px 16px", borderBottom: "1px solid #E2E8F0", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 13, color: "#475569", flexShrink: 0 }}>
+              {searchQuery ? `${docs.filter(d => d.filename.toLowerCase().includes(searchQuery.toLowerCase())).length} of ${docs.length} documents` : `${docs.length} documents`}
+            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {/* Search input */}
+              <div style={{ position: "relative" }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2" strokeLinecap="round"
+                  style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search documents…"
+                  style={{
+                    padding: "6px 28px 6px 28px", border: "1px solid #E2E8F0",
+                    borderRadius: 8, fontSize: 12, fontFamily: "inherit",
+                    color: "#0F172A", background: "#F8FAFC", outline: "none",
+                    width: 180, boxSizing: "border-box" as const, transition: "border-color .15s",
+                  }}
+                  onFocus={e => e.currentTarget.style.borderColor = "#6366F1"}
+                  onBlur={e => e.currentTarget.style.borderColor = "#E2E8F0"}
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery("")}
+                    style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#94A3B8", padding: 0, display: "flex" }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                  </button>
+                )}
+              </div>
+              {/* Upload button */}
+              <Link href={`/dashboard/upload?slug=${workspace.slug}`}
+                style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 11px", borderRadius: 7, background: "#6366F1", color: "#fff", fontSize: 12, fontWeight: 600, textDecoration: "none", flexShrink: 0 }}>
+                + Upload
+              </Link>
             </div>
           </div>
-          <span style={{ background: "#EEF2FF", color: "#3730A3", padding: "2px 8px", borderRadius: 20, fontSize: 10, fontWeight: 700 }}>embedded</span>
-          <button onClick={() => deleteDoc(doc.id)} title="Delete"
-            style={{ background: "none", border: "none", cursor: "pointer", color: "#94A3B8", padding: "4px 6px", borderRadius: 6, display: "flex", transition: "all .12s" }}
-            onMouseOver={(e) => { e.currentTarget.style.color = "#EF4444"; e.currentTarget.style.background = "#FEF2F2" }}
-            onMouseOut={(e) => { e.currentTarget.style.color = "#94A3B8"; e.currentTarget.style.background = "none" }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
-              <line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
-            </svg>
-          </button>
-        </li>
-      ))}
-    </ul>
-  )
-})()}
+
+          {(() => {
+            const filtered = docs.filter(d => d.filename.toLowerCase().includes(searchQuery.toLowerCase()))
+            if (docs.length === 0) return (
+              <div style={{ padding: "48px 24px", textAlign: "center" }}>
+                <p style={{ fontSize: 13, color: "#94A3B8", marginBottom: 12 }}>No documents yet.</p>
+                <Link href={`/dashboard/upload?slug=${workspace.slug}`} style={{ fontSize: 13, color: "#6366F1", fontWeight: 600, textDecoration: "none" }}>
+                  Upload your first document →
+                </Link>
+              </div>
+            )
+            if (filtered.length === 0) return (
+              <div style={{ padding: "40px 24px", textAlign: "center" }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" style={{ margin: "0 auto 10px", display: "block" }}>
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <p style={{ fontSize: 13, color: "#94A3B8", marginBottom: 8 }}>No results for <strong>{searchQuery}</strong></p>
+                <button onClick={() => setSearchQuery("")} style={{ fontSize: 12, color: "#6366F1", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
+                  Clear search
+                </button>
+              </div>
+            )
+            return (
+              <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                {filtered.map((doc) => (
+                  <li key={doc.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: "1px solid #F8FAFC" }}>
+                    <FileIcon filename={doc.filename} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{doc.filename}</div>
+                      <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 1 }}>
+                        {formatSize(doc.size)} · uploaded {new Date(doc.uploadedAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <span style={{ background: "#EEF2FF", color: "#3730A3", padding: "2px 8px", borderRadius: 20, fontSize: 10, fontWeight: 700 }}>embedded</span>
+                    <button onClick={() => deleteDoc(doc.id)} title="Delete"
+                      style={{ background: "none", border: "none", cursor: "pointer", color: "#94A3B8", padding: "4px 6px", borderRadius: 6, display: "flex", transition: "all .12s" }}
+                      onMouseOver={(e) => { e.currentTarget.style.color = "#EF4444"; e.currentTarget.style.background = "#FEF2F2" }}
+                      onMouseOut={(e) => { e.currentTarget.style.color = "#94A3B8"; e.currentTarget.style.background = "none" }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                        <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                        <line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
+                      </svg>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )
+          })()}
 
 
-        </div>
-      )}
+                  </div>
+                )}
 
       {/* ══ TAB: Embed ══ */}
       {activeTab === "embed" && (
@@ -384,7 +388,8 @@ export default function ProjectPageClient({ workspace, documents: initialDocs, c
               {`<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https://yourdomain.com"}/embed.js"\n  data-workspace="`}<span style={{ color: "#FCD34D" }}>{workspace.slug}</span>{`"\n  data-color="`}<span style={{ color: "#FCD34D" }}>{workspace.color}</span>{`"\n  data-position="`}<span style={{ color: "#FCD34D" }}>bottom-right</span>{`"\n  data-welcome="`}<span style={{ color: "#FCD34D" }}>{settingsWelcome || "Hi! How can I help you today?"}</span>{`"\n  defer\n></script>`}
             </pre> */}
           <pre style={{ color: "#7DD3FC", fontSize: 12, fontFamily: "'Fira Code', monospace", padding: "14px 16px", lineHeight: 1.7, overflowX: "auto", margin: 0 }}>
-            {`<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https://yourdomain.com"}/embed.js"\n  data-workspace="`}<span style={{ color: "#FCD34D" }}>{workspace.slug}</span>{`"\n  data-color="`}<span style={{ color: "#FCD34D" }}>{workspace.color}</span>{`"\n  data-position="`}<span style={{ color: "#FCD34D" }}>bottom-right</span>{`"\n  data-welcome="`}<span style={{ color: "#FCD34D" }}>{settingsWelcome || "Hi! How can I help you today?"}</span>{`"\n  data-size="`}<span style={{ color: "#FCD34D" }}>{workspace.size || "medium"}</span>{`"\n  defer\n></script>`}
+            {/* {`<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https://yourdomain.com"}/embed.js"\n  data-workspace="`}<span style={{ color: "#FCD34D" }}>{workspace.slug}</span>{`"\n  data-color="`}<span style={{ color: "#FCD34D" }}>{workspace.color}</span>{`"\n  data-position="`}<span style={{ color: "#FCD34D" }}>bottom-right</span>{`"\n  data-welcome="`}<span style={{ color: "#FCD34D" }}>{settingsWelcome || "Hi! How can I help you today?"}</span>{`"\n  data-size="`}<span style={{ color: "#FCD34D" }}>{workspace.size || "medium"}</span>{`"\n  defer\n></script>`} */}
+        {`<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https://yourdomain.com"}/embed.js"\n  data-workspace="`}<span style={{ color: "#FCD34D" }}>{workspace.slug}</span>{`"\n  data-color="`}<span style={{ color: "#FCD34D" }}>{workspace.color}</span>{`"\n  data-position="`}<span style={{ color: "#FCD34D" }}>bottom-right</span>{`"\n  data-welcome="`}<span style={{ color: "#FCD34D" }}>{settingsWelcome || "Hi! How can I help you today?"}</span>{`"\n  data-width="`}<span style={{ color: "#FCD34D" }}>{workspace.customWidth || 380}</span>{`"\n  data-height="`}<span style={{ color: "#FCD34D" }}>{workspace.customHeight || 520}</span>{`"\n  defer\n></script>`}
           </pre>
           </div>
 
