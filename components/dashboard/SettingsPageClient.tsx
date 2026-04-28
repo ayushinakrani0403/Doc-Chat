@@ -1,3 +1,4 @@
+
 "use client"
 import { useState } from "react"
 import { useSession, signOut } from "next-auth/react"
@@ -75,7 +76,6 @@ function SectionCard({
       background: "#fff", borderRadius: 14,
       border: "1px solid #E2E8F0", overflow: "hidden", marginBottom: 14,
     }}>
-      {/* Header — always visible, clickable to collapse */}
       <button
         onClick={() => setOpen((o) => !o)}
         style={{
@@ -94,11 +94,10 @@ function SectionCard({
             {icon}
           </svg>
         </div>
-        <div style={{ textAlign: "left", flex: 1 }}>
+        <div style={{ textAlign: "left", flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: "#0F172A" }}>{title}</div>
-          <div style={{ fontSize: 12, color: "#94A3B8", marginTop: 1 }}>{subtitle}</div>
+          <div style={{ fontSize: 12, color: "#94A3B8", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{subtitle}</div>
         </div>
-        {/* Chevron */}
         <svg
           width="16" height="16" viewBox="0 0 24 24" fill="none"
           stroke="#94A3B8" strokeWidth="2" strokeLinecap="round"
@@ -108,7 +107,6 @@ function SectionCard({
         </svg>
       </button>
 
-      {/* Body */}
       {open && <div style={{ padding: "20px 20px" }}>{children}</div>}
     </div>
   )
@@ -226,12 +224,11 @@ export default function SettingsPageClient({ user }: Props) {
   // ── Delete account ─────────────────────────────────────────────────────────
   const [showDeleteModal, setShowDeleteModal]     = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState("")
- 
   const [deleteErr, setDeleteErr]                 = useState("")
   const [deleteLoading, setDeleteLoading]         = useState(false)
 
   function closeDeleteModal() {
-    setShowDeleteModal(false); setDeleteConfirmText("");  setDeleteErr("")
+    setShowDeleteModal(false); setDeleteConfirmText(""); setDeleteErr("")
   }
 
   async function deleteAccount() {
@@ -264,8 +261,42 @@ export default function SettingsPageClient({ user }: Props) {
       padding: "28px 30px",
     }}>
 
+      {/* ── Responsive styles ── */}
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 640px) {
+          .spc-root { padding: 16px 14px !important; }
+
+          /* Page header */
+          .spc-page-header { padding: 16px !important; gap: 12px !important; }
+          .spc-page-header-inner { flex-direction: column !important; align-items: flex-start !important; }
+          .spc-signout-btn { width: 100% !important; justify-content: center !important; }
+
+          /* Profile & password 2-col grids → single col */
+          .spc-grid-2 { grid-template-columns: 1fr !important; }
+
+          /* Plan stats 3-col → single col */
+          .spc-plan-stats { grid-template-columns: 1fr !important; }
+
+          /* Upgrade features 2-col → single col */
+          .spc-upgrade-features { grid-template-columns: 1fr !important; }
+
+          /* Danger zone row → stack */
+          .spc-danger-row { flex-direction: column !important; align-items: flex-start !important; gap: 14px !important; }
+          .spc-danger-delete-btn { width: 100% !important; justify-content: center !important; }
+
+          /* Delete modal items grid → single col */
+          .spc-modal-items-grid { grid-template-columns: 1fr !important; }
+
+          /* Pro billing buttons — already flex:1 so they stretch fine, just ensure wrap */
+          .spc-pro-billing { flex-wrap: wrap !important; }
+          .spc-pro-billing button { flex: 1 1 120px !important; }
+        }
+      `}</style>
+
       {/* ── Page header with user summary ── */}
-      <div style={{
+      <div className="spc-page-header" style={{
         background: "#fff", borderRadius: 14,
         border: "1px solid #E2E8F0", padding: "20px 24px",
         marginBottom: 20,
@@ -281,47 +312,48 @@ export default function SettingsPageClient({ user }: Props) {
           {getInitials(name)}
         </div>
 
-        {/* Info */}
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 17, fontWeight: 700, color: "#0F172A" }}>{name}</div>
-          <div style={{ fontSize: 13, color: "#64748B", marginTop: 3 }}>{user.email}</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8, flexWrap: "wrap" }}>
-            <span style={{
-              background: user.plan === "pro" ? "#EEF2FF" : "#F1F5F9",
-              color: user.plan === "pro" ? "#3730A3" : "#475569",
-              fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 20,
-              textTransform: "uppercase",
-            }}>
-              {user.plan} plan
-            </span>
-            <span style={{ fontSize: 11, color: "#94A3B8" }}>Member since {memberSince}</span>
-            <span style={{ fontSize: 11, color: "#94A3B8" }}>·</span>
-            <span style={{ fontSize: 11, color: "#94A3B8" }}>{user.workspaceCount} workspace{user.workspaceCount !== 1 ? "s" : ""}</span>
+        {/* Info + sign out — wraps on mobile */}
+        <div className="spc-page-header-inner" style={{ flex: 1, display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</div>
+            <div style={{ fontSize: 13, color: "#64748B", marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8, flexWrap: "wrap" }}>
+              <span style={{
+                background: user.plan === "pro" ? "#EEF2FF" : "#F1F5F9",
+                color: user.plan === "pro" ? "#3730A3" : "#475569",
+                fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 20,
+                textTransform: "uppercase",
+              }}>
+                {user.plan} plan
+              </span>
+              <span style={{ fontSize: 11, color: "#94A3B8" }}>Since {memberSince}</span>
+              <span style={{ fontSize: 11, color: "#94A3B8" }}>·</span>
+              <span style={{ fontSize: 11, color: "#94A3B8" }}>{user.workspaceCount} workspace{user.workspaceCount !== 1 ? "s" : ""}</span>
+            </div>
           </div>
-        </div>
 
-        {/* Sign out */}
-        <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
-          style={{
-            display: "inline-flex", alignItems: "center", gap: 6,
-            padding: "8px 14px", borderRadius: 9,
-            border: "1px solid #E2E8F0", background: "transparent",
-            color: "#475569", fontSize: 13, fontWeight: 600,
-            cursor: "pointer", fontFamily: "inherit", flexShrink: 0,
-          }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-            <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-          Sign out
-        </button>
+          {/* Sign out */}
+          <button
+            className="spc-signout-btn"
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              padding: "8px 14px", borderRadius: 9,
+              border: "1px solid #E2E8F0", background: "transparent",
+              color: "#475569", fontSize: 13, fontWeight: 600,
+              cursor: "pointer", fontFamily: "inherit", flexShrink: 0,
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Sign out
+          </button>
+        </div>
       </div>
 
-      {/* ══════════════════════════════════════
-          SECTION 1: PROFILE
-      ══════════════════════════════════════ */}
+      {/* ══ SECTION 1: PROFILE ══ */}
       <SectionCard
         iconBg="#EEF2FF" iconColor="#6366F1"
         icon={<><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></>}
@@ -331,7 +363,7 @@ export default function SettingsPageClient({ user }: Props) {
       >
         <ErrBanner msg={profileErr} />
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 4 }}>
+        <div className="spc-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 4 }}>
           <Field label="Full name">
             <input
               type="text" value={name} onChange={(e) => setName(e.target.value)}
@@ -372,9 +404,7 @@ export default function SettingsPageClient({ user }: Props) {
         </div>
       </SectionCard>
 
-      {/* ══════════════════════════════════════
-          SECTION 2: SECURITY
-      ══════════════════════════════════════ */}
+      {/* ══ SECTION 2: SECURITY ══ */}
       <SectionCard
         iconBg="#F0FDFA" iconColor="#0D9488"
         icon={<><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>}
@@ -397,7 +427,7 @@ export default function SettingsPageClient({ user }: Props) {
 
         <div style={{ height: 1, background: "#F1F5F9", margin: "4px 0 16px" }} />
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        <div className="spc-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
           <div>
             <Field label="New password">
               <input
@@ -409,7 +439,6 @@ export default function SettingsPageClient({ user }: Props) {
                 onBlur={e => { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.boxShadow = "none" }}
               />
             </Field>
-            {/* Strength bar */}
             {pwStrength && (() => {
               const s = strengthMap[pwStrength]
               return (
@@ -472,9 +501,7 @@ export default function SettingsPageClient({ user }: Props) {
         />
       </SectionCard>
 
-      {/* ══════════════════════════════════════
-          SECTION 3: PLAN & BILLING
-      ══════════════════════════════════════ */}
+      {/* ══ SECTION 3: PLAN & BILLING ══ */}
       <SectionCard
         iconBg="#FFFBEB" iconColor="#D97706"
         icon={<><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></>}
@@ -483,7 +510,7 @@ export default function SettingsPageClient({ user }: Props) {
         defaultOpen={false}
       >
         {/* Stats row */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 20 }}>
+        <div className="spc-plan-stats" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 20 }}>
           {[
             { label: "Plan", value: user.plan === "pro" ? "Pro" : "Free", sub: user.plan === "pro" ? "$19/month" : "Limited", accent: user.plan === "pro" ? "#6366F1" : "#0F172A" },
             { label: "Workspaces", value: `${user.workspaceCount}`, sub: user.plan === "free" ? "of 3 allowed" : "Unlimited", accent: "#0F172A" },
@@ -518,7 +545,6 @@ export default function SettingsPageClient({ user }: Props) {
         {/* Upgrade CTA (free only) */}
         {user.plan === "free" && (
           <div style={{ background: "#0F172A", borderRadius: 12, padding: 22, position: "relative", overflow: "hidden" }}>
-            {/* Decorative circle */}
             <div style={{ position: "absolute", top: -24, right: -24, width: 100, height: 100, borderRadius: "50%", background: "rgba(99,102,241,0.12)", pointerEvents: "none" }} />
             <div style={{ position: "relative" }}>
               <div style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(99,102,241,.18)", padding: "3px 10px", borderRadius: 20, marginBottom: 12 }}>
@@ -531,7 +557,7 @@ export default function SettingsPageClient({ user }: Props) {
               <div style={{ fontSize: 12, color: "#94A3B8", marginBottom: 18, lineHeight: 1.6 }}>
                 Remove all limits. Unlimited workspaces, documents, and messages.
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 20 }}>
+              <div className="spc-upgrade-features" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 20 }}>
                 {["Unlimited workspaces", "Unlimited documents", "Unlimited messages/mo", "Priority support", "Custom branding", "Advanced analytics"].map((f) => (
                   <div key={f} style={{ display: "flex", alignItems: "center", gap: 7 }}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -540,12 +566,11 @@ export default function SettingsPageClient({ user }: Props) {
                 ))}
               </div>
               <button
-                // onClick={() => showToast("Stripe billing coming soon!")}
                 onClick={async () => {
-                const res = await fetch("/api/billing/checkout", { method: "POST" })
-                const data = await res.json()
-                if (data.url) window.location.href = data.url
-                else alert(data.error)
+                  const res = await fetch("/api/billing/checkout", { method: "POST" })
+                  const data = await res.json()
+                  if (data.url) window.location.href = data.url
+                  else alert(data.error)
                 }}
                 style={{
                   padding: "11px 24px", borderRadius: 10,
@@ -562,8 +587,7 @@ export default function SettingsPageClient({ user }: Props) {
         )}
 
         {user.plan === "pro" && (
-          <div style={{ display: "flex", gap: 10 }}>
-         
+          <div className="spc-pro-billing" style={{ display: "flex", gap: 10 }}>
             <button
               onClick={async () => {
                 const res = await fetch("/api/billing/checkout", { method: "GET" })
@@ -571,32 +595,27 @@ export default function SettingsPageClient({ user }: Props) {
                 if (data.url) window.location.href = data.url
                 else showToast("Failed to open billing portal")
               }}
-              style={{ flex: 1, padding: "10px 0", borderRadius: 9,  background: "#6366F1", border: "1px solid #E2E8F0", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+              style={{ flex: 1, padding: "10px 0", borderRadius: 9, background: "#6366F1", border: "1px solid #E2E8F0", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
             >
               Manage billing
             </button>
             <button
-            onClick={async () => {
-              if (!confirm("Are you sure you want to cancel your Pro plan?")) return
-              const res = await fetch("/api/billing/checkout", { method: "GET" })
-              const data = await res.json()
-              if (data.url) window.location.href = data.url  // Stripe portal handles cancellation
-              else showToast("Failed to open billing portal")
-            }}
-            style={{ flex: 1, padding: "10px 0", borderRadius: 9, background: "transparent", border: "1px solid #FECACA", color: "#DC2626", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
-          >
-            Cancel plan
-          </button>
-
+              onClick={async () => {
+                if (!confirm("Are you sure you want to cancel your Pro plan?")) return
+                const res = await fetch("/api/billing/checkout", { method: "GET" })
+                const data = await res.json()
+                if (data.url) window.location.href = data.url
+                else showToast("Failed to open billing portal")
+              }}
+              style={{ flex: 1, padding: "10px 0", borderRadius: 9, background: "transparent", border: "1px solid #FECACA", color: "#DC2626", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+            >
+              Cancel plan
+            </button>
           </div>
         )}
-
-        
       </SectionCard>
 
-      {/* ══════════════════════════════════════
-          SECTION 4: DANGER ZONE
-      ══════════════════════════════════════ */}
+      {/* ══ SECTION 4: DANGER ZONE ══ */}
       <div style={{ background: "#fff", borderRadius: 14, border: "1.5px solid #FECACA", overflow: "hidden" }}>
         <div style={{ padding: "14px 20px", background: "#FFF5F5", borderBottom: "1px solid #FEF2F2", display: "flex", alignItems: "center", gap: 10 }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" strokeLinecap="round">
@@ -606,8 +625,8 @@ export default function SettingsPageClient({ user }: Props) {
           <div style={{ fontSize: 14, fontWeight: 700, color: "#991B1B" }}>Danger zone</div>
         </div>
         <div style={{ padding: "18px 20px" }}>
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20 }}>
-            <div>
+          <div className="spc-danger-row" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20 }}>
+            <div style={{ flex: 1 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: "#0F172A", marginBottom: 5 }}>Delete your account</div>
               <div style={{ fontSize: 13, color: "#64748B", lineHeight: 1.6, maxWidth: 380 }}>
                 Permanently deletes your account and all data including workspaces, documents, and chat history. This cannot be undone.
@@ -624,12 +643,14 @@ export default function SettingsPageClient({ user }: Props) {
               </div>
             </div>
             <button
+              className="spc-danger-delete-btn"
               onClick={() => setShowDeleteModal(true)}
               style={{
                 padding: "9px 18px", borderRadius: 10,
                 background: "#DC2626", color: "#fff",
                 fontSize: 13, fontWeight: 700, border: "none",
                 cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0,
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
               }}
             >
               Delete account
@@ -638,9 +659,7 @@ export default function SettingsPageClient({ user }: Props) {
         </div>
       </div>
 
-      {/* ══════════════════════════════════════
-          DELETE MODAL
-      ══════════════════════════════════════ */}
+      {/* ══ DELETE MODAL ══ */}
       {showDeleteModal && (
         <div
           onClick={(e) => { if (e.target === e.currentTarget) closeDeleteModal() }}
@@ -673,7 +692,7 @@ export default function SettingsPageClient({ user }: Props) {
               {/* What gets deleted */}
               <div style={{ background: "#FEF2F2", borderRadius: 10, border: "1px solid #FECACA", padding: "12px 16px", marginBottom: 20 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: "#991B1B", marginBottom: 8 }}>This will permanently delete:</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                <div className="spc-modal-items-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                   {["Your account & profile", "All workspaces", "All uploaded documents", "All chat history"].map((item) => (
                     <div key={item} style={{ display: "flex", alignItems: "center", gap: 7 }}>
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" strokeLinecap="round">
@@ -684,18 +703,6 @@ export default function SettingsPageClient({ user }: Props) {
                   ))}
                 </div>
               </div>
-
-              {/* Password */}
-              {/* <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 6 }}>Your password</label>
-                <input
-                  type="password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)}
-                  placeholder="Enter your password to confirm"
-                  style={inputStyle}
-                  onFocus={e => (e.currentTarget.style.borderColor = "#EF4444")}
-                  onBlur={e => (e.currentTarget.style.borderColor = "#E2E8F0")}
-                />
-              </div> */}
 
               {/* Type DELETE */}
               <div style={{ marginBottom: 18 }}>
@@ -731,10 +738,8 @@ export default function SettingsPageClient({ user }: Props) {
                   disabled={deleteLoading || deleteConfirmText !== "DELETE"}
                   style={{
                     flex: 1, padding: "11px 0", borderRadius: 10,
-                    // background: deleteConfirmText === "DELETE" && deletePassword && !deleteLoading ? "#DC2626" : "#FCA5A5",
                     background: deleteConfirmText === "DELETE" && !deleteLoading ? "#DC2626" : "#FCA5A5",
                     color: "#fff", fontSize: 13, fontWeight: 700, border: "none",
-                    // cursor: deleteConfirmText === "DELETE" && deletePassword && !deleteLoading ? "pointer" : "not-allowed",
                     cursor: deleteConfirmText === "DELETE" && !deleteLoading ? "pointer" : "not-allowed",
                     fontFamily: "inherit", transition: "background .15s",
                     display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
@@ -757,7 +762,6 @@ export default function SettingsPageClient({ user }: Props) {
       )}
 
       <Toast visible={toastVisible} msg={toast} />
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   )
 }

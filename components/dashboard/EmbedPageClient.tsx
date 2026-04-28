@@ -10,9 +10,9 @@ type Workspace = {
   color: string
   welcomeMsg: string
   position: string
-   size: string
-   customWidth: number   
-  customHeight: number  
+  size: string
+  customWidth: number
+  customHeight: number
 }
 
 type Props = {
@@ -48,63 +48,53 @@ export default function EmbedPageClient({ workspaces, appUrl }: Props) {
   const [saving, setSaving]             = useState(false)
   const [toast, setToast]               = useState("")
   const [toastVisible, setToastVisible] = useState(false)
+  const [isMobile, setIsMobile]         = useState(false)
 
-  // const [customWidth, setCustomWidth]   = useState(workspaces[0]?.customWidth  ?? 460)
-  // const [customHeight, setCustomHeight] = useState(workspaces[0]?.customHeight ?? 580)
-const sizeDefaults: Record<string, { w: number; h: number }> = {
-  small:  { w: 400, h: 480 },
-  medium: { w: 460, h: 580 },
-  large:  { w: 540, h: 680 },
-}
-const _initSize = workspaces[0]?.size || "medium"
-const _initDims = sizeDefaults[_initSize] || sizeDefaults.medium
-const [customWidth,  setCustomWidth]  = useState(
-  (workspaces[0]?.customWidth  ?? 0) > 100 ? workspaces[0]!.customWidth  : _initDims.w
-)
-const [customHeight, setCustomHeight] = useState(
-  (workspaces[0]?.customHeight ?? 0) > 100 ? workspaces[0]!.customHeight : _initDims.h
-)
-
+  const sizeDefaults: Record<string, { w: number; h: number }> = {
+    small:  { w: 400, h: 480 },
+    medium: { w: 460, h: 580 },
+    large:  { w: 540, h: 680 },
+  }
+  const _initSize = workspaces[0]?.size || "medium"
+  const _initDims = sizeDefaults[_initSize] || sizeDefaults.medium
+  const [customWidth,  setCustomWidth]  = useState(
+    (workspaces[0]?.customWidth  ?? 0) > 100 ? workspaces[0]!.customWidth  : _initDims.w
+  )
+  const [customHeight, setCustomHeight] = useState(
+    (workspaces[0]?.customHeight ?? 0) > 100 ? workspaces[0]!.customHeight : _initDims.h
+  )
 
   const selectedWs = workspaces.find((w) => w.id === selectedId)
   const [size, setSize] = useState(workspaces[0]?.size || "medium")
 
+  const sizeMap: Record<string, { w: number; h: number }> = {
+    small:  { w: 400, h: 480 },
+    medium: { w: 460, h: 580 },
+    large:  { w: 540, h: 680 },
+  }
 
+  // Mobile detection
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)")
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener("change", handler)
+    return () => mq.removeEventListener("change", handler)
+  }, [])
 
-
-const previewWidth  = size === "small" ? 170 : size === "large" ? 250 : size === "custom" ? Math.round(customWidth / 2.2) : 210
-const previewHeight = size === "small" ? 100 : size === "large" ? 160 : size === "custom" ? Math.round(customHeight / 4.5) : 130
-
-const sizeMap: Record<string, { w: number; h: number }> = {
-  small:  { w: 400, h: 480 },
-  medium: { w: 460, h: 580 },
-  large:  { w: 540, h: 680 },
-}
-
-
-  // ✅ Fix — wrap in setTimeout to avoid synchronous setState in effect
-useEffect(() => {
-  if (!selectedWs) return
-  const timer = setTimeout(() => {
-    setColor(selectedWs.color)
-    setPosition(selectedWs.position || "bottom-right")
-    setWelcomeMsg(selectedWs.welcomeMsg || "Hi! How can I help you today?")
-    setSize(selectedWs.size || "medium")
-
-
- // ✅ Use preset values if DB has invalid values
-    const sizeDefaults: Record<string, { w: number; h: number }> = {
-      small:  { w: 400, h: 480 },
-      medium: { w: 460, h: 580 },
-      large:  { w: 540, h: 680 },
-    }
-    const dims = sizeDefaults[selectedWs.size || "medium"] || sizeDefaults.medium
-    setCustomWidth((selectedWs.customWidth   ?? 0) > 100 ? selectedWs.customWidth  : dims.w)
-    setCustomHeight((selectedWs.customHeight ?? 0) > 100 ? selectedWs.customHeight : dims.h)
-
-  }, 0)
-  return () => clearTimeout(timer)
-}, [selectedId])
+  useEffect(() => {
+    if (!selectedWs) return
+    const timer = setTimeout(() => {
+      setColor(selectedWs.color)
+      setPosition(selectedWs.position || "bottom-right")
+      setWelcomeMsg(selectedWs.welcomeMsg || "Hi! How can I help you today?")
+      setSize(selectedWs.size || "medium")
+      const dims = sizeDefaults[selectedWs.size || "medium"] || sizeDefaults.medium
+      setCustomWidth((selectedWs.customWidth   ?? 0) > 100 ? selectedWs.customWidth  : dims.w)
+      setCustomHeight((selectedWs.customHeight ?? 0) > 100 ? selectedWs.customHeight : dims.h)
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [selectedId])
 
   function showToast(msg: string) {
     setToast(msg)
@@ -112,10 +102,7 @@ useEffect(() => {
     setTimeout(() => setToastVisible(false), 2500)
   }
 
-
-// const snippet = `<script\n  src="${appUrl}/embed.js"\n  data-workspace="${selectedWs?.slug ?? ""}"\n  data-color="${color}"\n  data-position="${position}"\n  data-welcome="${welcomeMsg}"\n  ${size === "custom" ? `data-width="${customWidth}"\n  data-height="${customHeight}"` : `data-size="${size}"`}\n  defer\n><\/script>`
-// ✅ Always use data-width and data-height
-const snippet = `<script
+  const snippet = `<script
   src="${appUrl}/embed.js"
   data-workspace="${selectedWs?.slug ?? ""}"
   data-color="${color}"
@@ -139,15 +126,19 @@ const snippet = `<script
     const res = await fetch(`/api/workspace/${selectedId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ color, position, welcomeMsg , size , customWidth, customHeight  }),
+      body: JSON.stringify({ color, position, welcomeMsg, size, customWidth, customHeight }),
     })
     setSaving(false)
     showToast(res.ok ? "Widget settings saved!" : "Failed to save settings")
   }
 
+  // Responsive preview dimensions
+  const previewWidth  = size === "small" ? 150 : size === "large" ? 220 : size === "custom" ? Math.round(customWidth / 2.5) : 185
+  const previewHeight = size === "small" ? 90  : size === "large" ? 145 : size === "custom" ? Math.round(customHeight / 5)  : 115
+
   if (workspaces.length === 0) {
     return (
-      <div style={{ padding: "48px 30px", textAlign: "center", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      <div style={{ padding: "48px 20px", textAlign: "center", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
         <p style={{ fontSize: 14, color: "#475569", marginBottom: 16 }}>No workspaces yet.</p>
         <Link href="/dashboard/projects/new" style={{ padding: "8px 16px", borderRadius: 8, background: "#6366F1", color: "#fff", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
           Create workspace →
@@ -157,31 +148,81 @@ const snippet = `<script
   }
 
   return (
-    <div style={{ height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column", fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif", background: "#F8FAFC" }}>
+    <div style={{
+      // On mobile: normal scroll; on desktop: fixed viewport
+      height: isMobile ? "auto" : "100vh",
+      overflow: isMobile ? "visible" : "hidden",
+      display: "flex",
+      flexDirection: "column",
+      fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
+      background: "#F8FAFC",
+    }}>
 
       {/* ── Top bar ── */}
-      <div style={{ background: "#fff", borderBottom: "1px solid #E2E8F0", padding: "0 28px", height: 60, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 16, fontWeight: 700, color: "#0F172A" }}>Embed code generator</span>
-          <span style={{ fontSize: 12, color: "#94A3B8" }}>· Customise your widget and paste one line into any website</span>
+      <div style={{
+        background: "#fff",
+        borderBottom: "1px solid #E2E8F0",
+        padding: isMobile ? "0 16px" : "0 28px",
+        height: 60,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        flexShrink: 0,
+        gap: 12,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+          <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 700, color: "#0F172A", whiteSpace: "nowrap" }}>
+            Embed code
+          </span>
+          {/* Hide subtitle on mobile */}
+          {!isMobile && (
+            <span style={{ fontSize: 12, color: "#94A3B8" }}>
+              · Customise your widget and paste one line into any website
+            </span>
+          )}
         </div>
-        <Link href="/dashboard/preview" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 8, background: "#6366F1", color: "#fff", fontSize: 12, fontWeight: 600, textDecoration: "none" }}>
+        <Link
+          href="/dashboard/preview"
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            padding: isMobile ? "6px 10px" : "7px 14px",
+            borderRadius: 8, background: "#6366F1", color: "#fff",
+            fontSize: 12, fontWeight: 600, textDecoration: "none",
+            whiteSpace: "nowrap", flexShrink: 0,
+          }}
+        >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/>
           </svg>
-          Test in preview
+          {isMobile ? "Preview" : "Test in preview"}
         </Link>
       </div>
 
       {/* ── Main content ── */}
-      <div style={{ flex: 1, overflow: "auto", padding: "24px 28px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, height: "100%" }}>
+      <div style={{
+        flex: 1,
+        overflow: isMobile ? "visible" : "auto",
+        padding: isMobile ? "16px" : "24px 28px",
+      }}>
+        {/* On desktop: 2-col grid. On mobile: single column stack */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+          gap: isMobile ? 16 : 20,
+          height: isMobile ? "auto" : "100%",
+        }}>
 
           {/* ── LEFT: Settings ── */}
-          <div style={{ background: "#fff", borderRadius: 14, border: "1px solid #E2E8F0", overflow: "hidden", alignSelf: "start" }}>
+          <div style={{
+            background: "#fff",
+            borderRadius: 14,
+            border: "1px solid #E2E8F0",
+            overflow: "hidden",
+            alignSelf: "start",
+          }}>
             {/* Card header */}
-            <div style={{ padding: "16px 20px", borderBottom: "1px solid #E2E8F0", display: "flex", alignItems: "center", gap: 10, background: "#FAFAFA" }}>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: "#EEF2FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ padding: "14px 18px", borderBottom: "1px solid #E2E8F0", display: "flex", alignItems: "center", gap: 10, background: "#FAFAFA" }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: "#EEF2FF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6366F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/>
                 </svg>
@@ -192,10 +233,10 @@ const snippet = `<script
               </div>
             </div>
 
-            <div style={{ padding: 20 }}>
+            <div style={{ padding: isMobile ? 16 : 20 }}>
 
               {/* Workspace */}
-              <div style={{ marginBottom: 20 }}>
+              <div style={{ marginBottom: 18 }}>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 6 }}>Workspace</label>
                 <select
                   value={selectedId}
@@ -209,7 +250,7 @@ const snippet = `<script
               </div>
 
               {/* Accent color */}
-              <div style={{ marginBottom: 20 }}>
+              <div style={{ marginBottom: 18 }}>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 10 }}>Accent colour</label>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                   {COLORS.map((c) => (
@@ -217,19 +258,16 @@ const snippet = `<script
                       key={c.hex}
                       title={c.name}
                       onClick={() => setColor(c.hex)}
-                    
-                     // ✅ FIXED - clean white ring + shadow
-                  style={{
-                    width: 28, height: 28, borderRadius: "50%", background: c.hex,
-                    border: color === c.hex ? `3px solid #fff` : "3px solid transparent",
-                    cursor: "pointer",
-                    outline: color === c.hex ? `2px solid ${c.hex}` : "none",
-                    outlineOffset: 1,
-                    transform: color === c.hex ? "scale(1.15)" : "scale(1)",
-                    boxShadow: color === c.hex ? `0 0 0 3px ${c.hex}40` : "none",
-                    transition: "all .15s",
-                  }}
-
+                      style={{
+                        width: 28, height: 28, borderRadius: "50%", background: c.hex,
+                        border: color === c.hex ? "3px solid #fff" : "3px solid transparent",
+                        cursor: "pointer",
+                        outline: color === c.hex ? `2px solid ${c.hex}` : "none",
+                        outlineOffset: 1,
+                        transform: color === c.hex ? "scale(1.15)" : "scale(1)",
+                        boxShadow: color === c.hex ? `0 0 0 3px ${c.hex}40` : "none",
+                        transition: "all .15s",
+                      }}
                     />
                   ))}
                   <input
@@ -247,7 +285,7 @@ const snippet = `<script
               </div>
 
               {/* Position */}
-              <div style={{ marginBottom: 20 }}>
+              <div style={{ marginBottom: 18 }}>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 8 }}>Widget position</label>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6 }}>
                   {POSITIONS.map((p) => (
@@ -272,7 +310,7 @@ const snippet = `<script
               </div>
 
               {/* Welcome message */}
-              <div style={{ marginBottom: 22 }}>
+              <div style={{ marginBottom: 20 }}>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 6 }}>Welcome message</label>
                 <input
                   type="text"
@@ -286,72 +324,68 @@ const snippet = `<script
                 <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 4 }}>First message users see when they open the widget</p>
               </div>
 
-            
               {/* Widget size */}
-        <div style={{ marginBottom: 22 }}>
-          <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 8 }}>
-            Widget size
-          </label>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6, marginBottom: 10 }}>
-            {[
-              { value: "small",  label: "Small",  desc: "400 × 480px" },
-              { value: "medium", label: "Medium", desc: "460 × 580px" },
-              { value: "large",  label: "Large",  desc: "540 × 680px" },
-            ].map((s) => (
-              <button
-                key={s.value}
-                // onClick={() => setSize(s.value)}
-                onClick={() => {
-          setSize(s.value)
-          setCustomWidth(sizeMap[s.value].w)
-          setCustomHeight(sizeMap[s.value].h)
-        }}
-        style={{
-          padding: "9px 6px", borderRadius: 9, textAlign: "center" as const,
-          border: `1.5px solid ${size === s.value ? color : "#E2E8F0"}`,
-          background: size === s.value ? color + "12" : "#fff",
-          color: size === s.value ? color : "#64748B",
-          cursor: "pointer", fontFamily: "inherit", transition: "all .15s",
-        }}
-      >
-        <div style={{ fontSize: 13, fontWeight: size === s.value ? 700 : 500 }}>{s.label}</div>
-        <div style={{ fontSize: 10, marginTop: 2, color: size === s.value ? color : "#94A3B8" }}>{s.desc}</div>
-      </button>
-    ))}
-  </div>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 8 }}>Widget size</label>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6, marginBottom: 10 }}>
+                  {[
+                    { value: "small",  label: "Small",  desc: "400 × 480px" },
+                    { value: "medium", label: "Medium", desc: "460 × 580px" },
+                    { value: "large",  label: "Large",  desc: "540 × 680px" },
+                  ].map((s) => (
+                    <button
+                      key={s.value}
+                      onClick={() => {
+                        setSize(s.value)
+                        setCustomWidth(sizeMap[s.value].w)
+                        setCustomHeight(sizeMap[s.value].h)
+                      }}
+                      style={{
+                        padding: "9px 6px", borderRadius: 9, textAlign: "center" as const,
+                        border: `1.5px solid ${size === s.value ? color : "#E2E8F0"}`,
+                        background: size === s.value ? color + "12" : "#fff",
+                        color: size === s.value ? color : "#64748B",
+                        cursor: "pointer", fontFamily: "inherit", transition: "all .15s",
+                      }}
+                    >
+                      <div style={{ fontSize: 13, fontWeight: size === s.value ? 700 : 500 }}>{s.label}</div>
+                      <div style={{ fontSize: 10, marginTop: 2, color: size === s.value ? color : "#94A3B8" }}>{s.desc}</div>
+                    </button>
+                  ))}
+                </div>
 
-              {/* Custom size inputs */}
-              <div style={{ background: "#F8FAFC", borderRadius: 8, padding: "10px 12px", border: "1px solid #E2E8F0" }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: "#475569", marginBottom: 8 }}>Or enter custom size</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                  <div>
-                    <label style={{ fontSize: 11, color: "#64748B", marginBottom: 4, display: "block" }}>Width (px)</label>
-                    <input
-                      type="number"
-                      min={300} max={800} step={10}
-                      value={customWidth}
-                      onChange={(e) => { setCustomWidth(Number(e.target.value)); setSize("custom") }}
-                      style={{ width: "100%", padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, fontSize: 12, fontFamily: "inherit", outline: "none", boxSizing: "border-box" as const }}
-                      onFocus={(e) => (e.currentTarget.style.borderColor = color)}
-                      onBlur={(e) => (e.currentTarget.style.borderColor = "#E2E8F0")}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 11, color: "#64748B", marginBottom: 4, display: "block" }}>Height (px)</label>
-                    <input
-                      type="number"
-                      min={400} max={900} step={10}
-                      value={customHeight}
-                      onChange={(e) => { setCustomHeight(Number(e.target.value)); setSize("custom") }}
-                      style={{ width: "100%", padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, fontSize: 12, fontFamily: "inherit", outline: "none", boxSizing: "border-box" as const }}
-                      onFocus={(e) => (e.currentTarget.style.borderColor = color)}
-                      onBlur={(e) => (e.currentTarget.style.borderColor = "#E2E8F0")}
-                    />
+                {/* Custom size inputs */}
+                <div style={{ background: "#F8FAFC", borderRadius: 8, padding: "10px 12px", border: "1px solid #E2E8F0" }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "#475569", marginBottom: 8 }}>Or enter custom size</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <div>
+                      <label style={{ fontSize: 11, color: "#64748B", marginBottom: 4, display: "block" }}>Width (px)</label>
+                      <input
+                        type="number"
+                        min={300} max={800} step={10}
+                        value={customWidth}
+                        onChange={(e) => { setCustomWidth(Number(e.target.value)); setSize("custom") }}
+                        style={{ width: "100%", padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, fontSize: 12, fontFamily: "inherit", outline: "none", boxSizing: "border-box" as const }}
+                        onFocus={(e) => (e.currentTarget.style.borderColor = color)}
+                        onBlur={(e) => (e.currentTarget.style.borderColor = "#E2E8F0")}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 11, color: "#64748B", marginBottom: 4, display: "block" }}>Height (px)</label>
+                      <input
+                        type="number"
+                        min={400} max={900} step={10}
+                        value={customHeight}
+                        onChange={(e) => { setCustomHeight(Number(e.target.value)); setSize("custom") }}
+                        style={{ width: "100%", padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, fontSize: 12, fontFamily: "inherit", outline: "none", boxSizing: "border-box" as const }}
+                        onFocus={(e) => (e.currentTarget.style.borderColor = color)}
+                        onBlur={(e) => (e.currentTarget.style.borderColor = "#E2E8F0")}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-                  
+
               {/* Save */}
               <button
                 onClick={saveSettings}
@@ -368,8 +402,8 @@ const snippet = `<script
 
             {/* Code snippet card */}
             <div style={{ background: "#0F172A", borderRadius: 14, overflow: "hidden" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,.07)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 14px", borderBottom: "1px solid rgba(255,255,255,.07)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   {["#FF5F57", "#FEBC2E", "#28C840"].map((c) => (
                     <div key={c} style={{ width: 11, height: 11, borderRadius: "50%", background: c }} />
                   ))}
@@ -381,8 +415,9 @@ const snippet = `<script
                     display: "flex", alignItems: "center", gap: 6,
                     background: copied ? "rgba(13,148,136,.25)" : "rgba(255,255,255,.08)",
                     border: "none", color: copied ? "#5EEAD4" : "#7DD3FC",
-                    borderRadius: 6, padding: "5px 12px", fontSize: 11,
+                    borderRadius: 6, padding: "5px 10px", fontSize: 11,
                     cursor: "pointer", fontFamily: "inherit", transition: "all .15s",
+                    whiteSpace: "nowrap",
                   }}
                 >
                   {copied ? (
@@ -393,7 +428,17 @@ const snippet = `<script
                 </button>
               </div>
 
-              <pre style={{ color: "#7DD3FC", fontSize: 13, fontFamily: "'Fira Code','Courier New',monospace", padding: "18px 20px", lineHeight: 2, overflowX: "auto", margin: 0 }}>
+              {/* Code block — horizontally scrollable on mobile */}
+              <pre style={{
+                color: "#7DD3FC",
+                fontSize: isMobile ? 11 : 13,
+                fontFamily: "'Fira Code','Courier New',monospace",
+                padding: isMobile ? "14px" : "18px 20px",
+                lineHeight: 2,
+                overflowX: "auto",
+                margin: 0,
+                WebkitOverflowScrolling: "touch",
+              }}>
                 <span style={{ color: "#F472B6" }}>&lt;script</span>{"\n"}
                 {"  "}<span style={{ color: "#86EFAC" }}>src</span><span style={{ color: "#fff" }}>=</span><span style={{ color: "#FCD34D" }}>"{appUrl}/embed.js"</span>{"\n"}
                 {"  "}<span style={{ color: "#86EFAC" }}>data-workspace</span><span style={{ color: "#fff" }}>=</span><span style={{ color: "#FCD34D" }}>"{selectedWs?.slug}"</span>{"\n"}
@@ -411,10 +456,12 @@ const snippet = `<script
             <div style={{ background: "#fff", borderRadius: 14, border: "1px solid #E2E8F0", overflow: "hidden", flex: 1 }}>
               <div style={{ padding: "12px 16px", borderBottom: "1px solid #E2E8F0", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#FAFAFA" }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: "#0F172A" }}>Live preview</div>
-                <span style={{ fontSize: 11, color: "#94A3B8" }}>updates as you change settings</span>
+                <span style={{ fontSize: 11, color: "#94A3B8" }}>
+                  {isMobile ? "updates live" : "updates as you change settings"}
+                </span>
               </div>
 
-              <div style={{ padding: 20 }}>
+              <div style={{ padding: isMobile ? 14 : 20 }}>
                 {/* Mock browser window */}
                 <div style={{ background: "#F1F5F9", borderRadius: 10, overflow: "hidden", border: "1px solid #E2E8F0" }}>
                   {/* Browser chrome */}
@@ -424,22 +471,22 @@ const snippet = `<script
                         <div key={c} style={{ width: 9, height: 9, borderRadius: "50%", background: c }} />
                       ))}
                     </div>
-                    <div style={{ flex: 1, background: "#fff", border: "1px solid #E2E8F0", borderRadius: 5, padding: "3px 10px", fontSize: 10, color: "#94A3B8", fontFamily: "monospace" }}>
+                    <div style={{ flex: 1, background: "#fff", border: "1px solid #E2E8F0", borderRadius: 5, padding: "3px 10px", fontSize: 10, color: "#94A3B8", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {selectedWs?.name.toLowerCase().replace(/\s+/g, "-")}.com
                     </div>
                   </div>
 
                   {/* Mock page content */}
-                  <div style={{ padding: 20, minHeight: 260, position: "relative" }}>
+                  <div style={{ padding: isMobile ? 14 : 20, minHeight: isMobile ? 220 : 260, position: "relative" }}>
                     {/* Skeleton content */}
                     <div style={{ marginBottom: 16 }}>
                       <div style={{ height: 8, background: "#E2E8F0", borderRadius: 4, marginBottom: 8, width: "50%" }} />
                       <div style={{ height: 8, background: "#E2E8F0", borderRadius: 4, marginBottom: 8, width: "80%" }} />
                       <div style={{ height: 8, background: "#E2E8F0", borderRadius: 4, width: "35%" }} />
                     </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 16 }}>
-                      {[1,2,3].map((i) => (
-                        <div key={i} style={{ background: "#fff", borderRadius: 6, border: "1px solid #E2E8F0", padding: 12 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: isMobile ? 6 : 10, marginBottom: 16 }}>
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} style={{ background: "#fff", borderRadius: 6, border: "1px solid #E2E8F0", padding: isMobile ? 8 : 12 }}>
                           <div style={{ height: 6, background: "#F1F5F9", borderRadius: 3, marginBottom: 6 }} />
                           <div style={{ height: 6, background: "#F1F5F9", borderRadius: 3, width: "70%" }} />
                         </div>
@@ -449,13 +496,15 @@ const snippet = `<script
                     <div style={{ height: 8, background: "#E2E8F0", borderRadius: 4, width: "45%" }} />
 
                     {/* Widget preview */}
-                    
                     <div style={{
                       position: "absolute", bottom: 12,
-                      ...(position === "bottom-left" ? { left: 12 } : position === "bottom-center" ? { left: "50%", transform: "translateX(-50%)" } : { right: 12 }),
-                      // width: 210,
-                      width: previewWidth,              // ← changes on size click!
-                      transition: "width 0.3s ease",   // ← smooth animation!
+                      ...(position === "bottom-left"
+                        ? { left: 12 }
+                        : position === "bottom-center"
+                        ? { left: "50%", transform: "translateX(-50%)" }
+                        : { right: 12 }),
+                      width: previewWidth,
+                      transition: "width 0.3s ease",
                       boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
                       borderRadius: 12,
                       overflow: "hidden",
@@ -475,7 +524,7 @@ const snippet = `<script
                       </div>
 
                       {/* Widget body */}
-                      <div style={{ background: "#fff", padding: 10, minHeight: previewHeight,   transition: "min-height 0.3s ease", borderLeft: "1px solid #E2E8F0", borderRight: "1px solid #E2E8F0" }}>
+                      <div style={{ background: "#fff", padding: 10, minHeight: previewHeight, transition: "min-height 0.3s ease", borderLeft: "1px solid #E2E8F0", borderRight: "1px solid #E2E8F0" }}>
                         <div style={{ background: "#F1F5F9", borderRadius: "8px 8px 8px 2px", padding: "6px 9px", fontSize: 10, color: "#0F172A", lineHeight: 1.5 }}>
                           {welcomeMsg || "Hi! How can I help you today?"}
                         </div>
@@ -507,20 +556,33 @@ const snippet = `<script
                 </div>
               </div>
             </div>
+
           </div>
+          {/* end RIGHT column */}
         </div>
       </div>
 
       {/* Toast */}
       <div style={{
-        position: "fixed", bottom: 24, right: 24,
-        background: "#0F172A", color: "#fff",
-        padding: "10px 18px", borderRadius: 10,
-        fontSize: 13, fontWeight: 500,
+        position: "fixed",
+        bottom: isMobile ? 16 : 24,
+        right: isMobile ? 16 : 24,
+        left: isMobile ? 16 : "auto",
+        background: "#0F172A",
+        color: "#fff",
+        padding: "10px 18px",
+        borderRadius: 10,
+        fontSize: 13,
+        fontWeight: 500,
         opacity: toastVisible ? 1 : 0,
         transform: toastVisible ? "translateY(0)" : "translateY(8px)",
-        transition: "all .25s", pointerEvents: "none", zIndex: 100,
-        display: "flex", alignItems: "center", gap: 8,
+        transition: "all .25s",
+        pointerEvents: "none",
+        zIndex: 100,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: isMobile ? "center" : "flex-start",
+        gap: 8,
       }}>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2.5" strokeLinecap="round">
           <polyline points="20 6 9 17 4 12"/>

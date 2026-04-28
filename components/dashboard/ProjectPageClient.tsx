@@ -1,3 +1,4 @@
+
 "use client"
 import { useState } from "react"
 import Link from "next/link"
@@ -34,12 +35,10 @@ type Props = {
   workspace: Workspace
   documents: Document[]
   chartData: ChartDay[]
-
-  analytics: {           // ← ADD
+  analytics: {
     answeredPct: number
     avgResponseSec: string
   }
-
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -82,22 +81,15 @@ export default function ProjectPageClient({ workspace, documents: initialDocs, c
   const [toast, setToast] = useState("")
   const [toastVisible, setToastVisible] = useState(false)
 
-  // Settings form state
   const [settingsName, setSettingsName] = useState(workspace.name)
   const [settingsPrompt, setSettingsPrompt] = useState(workspace.systemPrompt)
   const [settingsModel, setSettingsModel] = useState(workspace.model)
   const [settingsTemp, setSettingsTemp] = useState(String(workspace.temperature))
   const [settingsWelcome, setSettingsWelcome] = useState(workspace.welcomeMsg)
   const [settingsSaving, setSettingsSaving] = useState(false)
-
-  // Add this with your other state declarations
   const [searchQuery, setSearchQuery] = useState("")
 
-  
-
-  // const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https://yourdomain.com"}/embed.js"\n  data-workspace="${workspace.slug}"\n  data-color="${workspace.color}"\n  data-position="bottom-right"\n  data-welcome="${settingsWelcome || "Hi! How can I help you today?"}"\n  data-size="${workspace.size || "medium"}"\n  defer\n><\/script>`
-
-const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https://yourdomain.com"}/embed.js"\n  data-workspace="${workspace.slug}"\n  data-color="${workspace.color}"\n  data-position="bottom-right"\n  data-welcome="${settingsWelcome || "Hi! How can I help you today?"}"\n  data-width="${workspace.customWidth || 380}"\n  data-height="${workspace.customHeight || 520}"\n  defer\n><\/script>`
+  const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https://yourdomain.com"}/embed.js"\n  data-workspace="${workspace.slug}"\n  data-color="${workspace.color}"\n  data-position="bottom-right"\n  data-welcome="${settingsWelcome || "Hi! How can I help you today?"}"\n  data-width="${workspace.customWidth || 380}"\n  data-height="${workspace.customHeight || 520}"\n  defer\n><\/script>`
 
   function showToast(msg: string) {
     setToast(msg)
@@ -108,13 +100,8 @@ const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https
   async function deleteDoc(docId: string) {
     const doc = docs.find((d) => d.id === docId)
     setDocs((prev) => prev.filter((d) => d.id !== docId))
-
-    const res = await fetch(`/api/workspace/${workspace.id}/documents/${docId}`, {
-      method: "DELETE",
-    })
-
+    const res = await fetch(`/api/workspace/${workspace.id}/documents/${docId}`, { method: "DELETE" })
     if (!res.ok) {
-      // Restore on failure
       if (doc) setDocs((prev) => [doc, ...prev])
       showToast("Failed to delete document")
     } else {
@@ -136,7 +123,6 @@ const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https
       }),
     })
     setSettingsSaving(false)
-
     if (res.ok) {
       showToast("Settings saved!")
       router.refresh()
@@ -153,7 +139,7 @@ const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https
   const maxChart = Math.max(...chartData.map((d) => d.count), 1)
 
   const tabStyle = (tab: typeof activeTab) => ({
-    padding: "9px 18px",
+    padding: "9px 14px",
     border: "none",
     background: "transparent",
     fontSize: 13,
@@ -164,30 +150,53 @@ const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https
     borderBottom: activeTab === tab ? "2px solid #6366F1" : "2px solid transparent",
     marginBottom: -2,
     transition: "all .12s",
+    whiteSpace: "nowrap" as const,
   } as React.CSSProperties)
 
   return (
-    <div style={{ padding: "28px 30px", fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif" }}>
+    <div className="ppc-root" style={{ padding: "28px 30px", fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif" }}>
+
+      {/* ── Responsive styles ── */}
+      <style>{`
+        @media (max-width: 640px) {
+          .ppc-root { padding: 16px 14px !important; }
+          .ppc-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
+          .ppc-header-actions { width: 100%; display: flex !important; gap: 8px !important; }
+          .ppc-header-actions a, .ppc-header-actions button { flex: 1; justify-content: center !important; }
+          .ppc-tabs { overflow-x: auto !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+          .ppc-tabs::-webkit-scrollbar { display: none; }
+          .ppc-doc-header { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important; }
+          .ppc-doc-header-right { width: 100%; display: flex !important; gap: 8px !important; }
+          .ppc-search-wrap { flex: 1 !important; }
+          .ppc-search-wrap input { width: 100% !important; }
+          .ppc-analytics-grid { grid-template-columns: 1fr !important; }
+          .ppc-settings-grid-2 { grid-template-columns: 1fr !important; }
+          .ppc-settings-footer { flex-direction: column !important; gap: 10px !important; }
+          .ppc-settings-footer .ppc-delete-btn { margin-left: 0 !important; align-self: flex-start !important; }
+          .ppc-embed-actions { flex-wrap: wrap !important; }
+          .ppc-doc-badge { display: none !important; }
+        }
+      `}</style>
 
       {/* ── Workspace header ── */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      <div className="ppc-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
           <div style={{ width: 44, height: 44, background: workspace.color, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 15, fontWeight: 700, flexShrink: 0 }}>
             {getInitials(workspace.name)}
           </div>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
               <h1 style={{ fontSize: 20, fontWeight: 700, color: "#0F172A", margin: 0 }}>{workspace.name}</h1>
-              <span style={{ background: "#ECFDF5", color: "#064E3B", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20 }}>
+              <span style={{ background: "#ECFDF5", color: "#064E3B", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, flexShrink: 0 }}>
                 {workspace.status}
               </span>
             </div>
-            <div style={{ fontSize: 12, color: "#94A3B8", fontFamily: "monospace", marginTop: 2 }}>
-              slug: {workspace.slug} &nbsp;·&nbsp; {workspace.docCount} documents &nbsp;·&nbsp; {workspace.chatCount} chats
+            <div style={{ fontSize: 12, color: "#94A3B8", fontFamily: "monospace", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              slug: {workspace.slug} &nbsp;·&nbsp; {workspace.docCount} docs &nbsp;·&nbsp; {workspace.chatCount} chats
             </div>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className="ppc-header-actions" style={{ display: "flex", gap: 8, flexShrink: 0 }}>
           <button
             onClick={() => setActiveTab("settings")}
             style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 8, border: "1px solid #E2E8F0", background: "transparent", fontSize: 12, fontWeight: 600, color: "#475569", cursor: "pointer", fontFamily: "inherit" }}
@@ -208,7 +217,7 @@ const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https
       </div>
 
       {/* ── Tabs ── */}
-      <div style={{ display: "flex", borderBottom: "2px solid #E2E8F0", marginBottom: 20 }}>
+      <div className="ppc-tabs" style={{ display: "flex", borderBottom: "2px solid #E2E8F0", marginBottom: 20 }}>
         {(["docs", "embed", "analytics", "settings"] as const).map((tab) => (
           <button key={tab} style={tabStyle(tab)} onClick={() => setActiveTab(tab)}>
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -220,61 +229,14 @@ const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https
       {/* ══ TAB: Documents ══ */}
       {activeTab === "docs" && (
         <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #E2E8F0", overflow: "hidden" }}>
-{/*        
-          <div style={{ padding: "12px 16px", borderBottom: "1px solid #E2E8F0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 13, color: "#475569" }}>{docs.length} documents</span>
-            <Link
-              href={`/dashboard/upload?slug=${workspace.slug}`}
-              style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 11px", borderRadius: 7, background: "#6366F1", color: "#fff", fontSize: 12, fontWeight: 600, textDecoration: "none" }}
-            >
-              + Upload
-            </Link>
-          </div>
-
-          {docs.length === 0 ? (
-            <div style={{ padding: "48px 24px", textAlign: "center" }}>
-              <p style={{ fontSize: 13, color: "#94A3B8", marginBottom: 12 }}>No documents yet.</p>
-              <Link href={`/dashboard/upload?slug=${workspace.slug}`} style={{ fontSize: 13, color: "#6366F1", fontWeight: 600, textDecoration: "none" }}>
-                Upload your first document →
-              </Link>
-            </div>
-          ) : (
-            <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-              {docs.map((doc) => (
-                <li key={doc.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: "1px solid #F8FAFC" }}>
-                  <FileIcon filename={doc.filename} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{doc.filename}</div>
-                    <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 1 }}>
-                      {formatSize(doc.size)} · uploaded {new Date(doc.uploadedAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                  <span style={{ background: "#EEF2FF", color: "#3730A3", padding: "2px 8px", borderRadius: 20, fontSize: 10, fontWeight: 700 }}>embedded</span>
-                  <button
-                    onClick={() => deleteDoc(doc.id)}
-                    title="Delete"
-                    style={{ background: "none", border: "none", cursor: "pointer", color: "#94A3B8", padding: "4px 6px", borderRadius: 6, display: "flex", transition: "all .12s" }}
-                    onMouseOver={(e) => { e.currentTarget.style.color = "#EF4444"; e.currentTarget.style.background = "#FEF2F2" }}
-                    onMouseOut={(e) => { e.currentTarget.style.color = "#94A3B8"; e.currentTarget.style.background = "none" }}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                      <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
-                      <line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
-                    </svg>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )} */}
-
-          {/* Header with search */}
-          <div style={{ padding: "12px 16px", borderBottom: "1px solid #E2E8F0", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+          <div className="ppc-doc-header" style={{ padding: "12px 16px", borderBottom: "1px solid #E2E8F0", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
             <span style={{ fontSize: 13, color: "#475569", flexShrink: 0 }}>
-              {searchQuery ? `${docs.filter(d => d.filename.toLowerCase().includes(searchQuery.toLowerCase())).length} of ${docs.length} documents` : `${docs.length} documents`}
+              {searchQuery
+                ? `${docs.filter(d => d.filename.toLowerCase().includes(searchQuery.toLowerCase())).length} of ${docs.length} documents`
+                : `${docs.length} documents`}
             </span>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              {/* Search input */}
-              <div style={{ position: "relative" }}>
+            <div className="ppc-doc-header-right" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div className="ppc-search-wrap" style={{ position: "relative" }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2" strokeLinecap="round"
                   style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
                   <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
@@ -302,7 +264,6 @@ const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https
                   </button>
                 )}
               </div>
-              {/* Upload button */}
               <Link href={`/dashboard/upload?slug=${workspace.slug}`}
                 style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 11px", borderRadius: 7, background: "#6366F1", color: "#fff", fontSize: 12, fontWeight: 600, textDecoration: "none", flexShrink: 0 }}>
                 + Upload
@@ -339,12 +300,12 @@ const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{doc.filename}</div>
                       <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 1 }}>
-                        {formatSize(doc.size)} · uploaded {new Date(doc.uploadedAt).toLocaleDateString()}
+                        {formatSize(doc.size)} · {new Date(doc.uploadedAt).toLocaleDateString()}
                       </div>
                     </div>
-                    <span style={{ background: "#EEF2FF", color: "#3730A3", padding: "2px 8px", borderRadius: 20, fontSize: 10, fontWeight: 700 }}>embedded</span>
+                    <span className="ppc-doc-badge" style={{ background: "#EEF2FF", color: "#3730A3", padding: "2px 8px", borderRadius: 20, fontSize: 10, fontWeight: 700, flexShrink: 0 }}>embedded</span>
                     <button onClick={() => deleteDoc(doc.id)} title="Delete"
-                      style={{ background: "none", border: "none", cursor: "pointer", color: "#94A3B8", padding: "4px 6px", borderRadius: 6, display: "flex", transition: "all .12s" }}
+                      style={{ background: "none", border: "none", cursor: "pointer", color: "#94A3B8", padding: "4px 6px", borderRadius: 6, display: "flex", flexShrink: 0, transition: "all .12s" }}
                       onMouseOver={(e) => { e.currentTarget.style.color = "#EF4444"; e.currentTarget.style.background = "#FEF2F2" }}
                       onMouseOut={(e) => { e.currentTarget.style.color = "#94A3B8"; e.currentTarget.style.background = "none" }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -357,10 +318,8 @@ const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https
               </ul>
             )
           })()}
-
-
-                  </div>
-                )}
+        </div>
+      )}
 
       {/* ══ TAB: Embed ══ */}
       {activeTab === "embed" && (
@@ -380,20 +339,15 @@ const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https
                 style={{ background: "rgba(255,255,255,.08)", border: "none", color: "#7DD3FC", borderRadius: 5, padding: "4px 10px", fontSize: 11, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontFamily: "inherit" }}
               >
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                Copy snippet
+                Copy
               </button>
             </div>
-
-            {/* <pre style={{ color: "#7DD3FC", fontSize: 12, fontFamily: "'Fira Code', monospace", padding: "14px 16px", lineHeight: 1.7, overflowX: "auto", margin: 0 }}>
-              {`<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https://yourdomain.com"}/embed.js"\n  data-workspace="`}<span style={{ color: "#FCD34D" }}>{workspace.slug}</span>{`"\n  data-color="`}<span style={{ color: "#FCD34D" }}>{workspace.color}</span>{`"\n  data-position="`}<span style={{ color: "#FCD34D" }}>bottom-right</span>{`"\n  data-welcome="`}<span style={{ color: "#FCD34D" }}>{settingsWelcome || "Hi! How can I help you today?"}</span>{`"\n  defer\n></script>`}
-            </pre> */}
-          <pre style={{ color: "#7DD3FC", fontSize: 12, fontFamily: "'Fira Code', monospace", padding: "14px 16px", lineHeight: 1.7, overflowX: "auto", margin: 0 }}>
-            {/* {`<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https://yourdomain.com"}/embed.js"\n  data-workspace="`}<span style={{ color: "#FCD34D" }}>{workspace.slug}</span>{`"\n  data-color="`}<span style={{ color: "#FCD34D" }}>{workspace.color}</span>{`"\n  data-position="`}<span style={{ color: "#FCD34D" }}>bottom-right</span>{`"\n  data-welcome="`}<span style={{ color: "#FCD34D" }}>{settingsWelcome || "Hi! How can I help you today?"}</span>{`"\n  data-size="`}<span style={{ color: "#FCD34D" }}>{workspace.size || "medium"}</span>{`"\n  defer\n></script>`} */}
-        {`<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https://yourdomain.com"}/embed.js"\n  data-workspace="`}<span style={{ color: "#FCD34D" }}>{workspace.slug}</span>{`"\n  data-color="`}<span style={{ color: "#FCD34D" }}>{workspace.color}</span>{`"\n  data-position="`}<span style={{ color: "#FCD34D" }}>bottom-right</span>{`"\n  data-welcome="`}<span style={{ color: "#FCD34D" }}>{settingsWelcome || "Hi! How can I help you today?"}</span>{`"\n  data-width="`}<span style={{ color: "#FCD34D" }}>{workspace.customWidth || 380}</span>{`"\n  data-height="`}<span style={{ color: "#FCD34D" }}>{workspace.customHeight || 520}</span>{`"\n  defer\n></script>`}
-          </pre>
+            <pre style={{ color: "#7DD3FC", fontSize: 12, fontFamily: "'Fira Code', monospace", padding: "14px 16px", lineHeight: 1.7, overflowX: "auto", margin: 0 }}>
+              {`<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https://yourdomain.com"}/embed.js"\n  data-workspace="`}<span style={{ color: "#FCD34D" }}>{workspace.slug}</span>{`"\n  data-color="`}<span style={{ color: "#FCD34D" }}>{workspace.color}</span>{`"\n  data-position="`}<span style={{ color: "#FCD34D" }}>bottom-right</span>{`"\n  data-welcome="`}<span style={{ color: "#FCD34D" }}>{settingsWelcome || "Hi! How can I help you today?"}</span>{`"\n  data-width="`}<span style={{ color: "#FCD34D" }}>{workspace.customWidth || 380}</span>{`"\n  data-height="`}<span style={{ color: "#FCD34D" }}>{workspace.customHeight || 520}</span>{`"\n  defer\n></script>`}
+            </pre>
           </div>
 
-          <div style={{ display: "flex", gap: 8 }}>
+          <div className="ppc-embed-actions" style={{ display: "flex", gap: 8 }}>
             <button
               onClick={copySnippet}
               style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 8, background: "#6366F1", color: "#fff", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer", fontFamily: "inherit" }}
@@ -413,12 +367,8 @@ const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https
       {/* ══ TAB: Analytics ══ */}
       {activeTab === "analytics" && (
         <>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 20 }}>
+          <div className="ppc-analytics-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 20 }}>
             {[
-              // { label: "Total conversations", value: workspace.chatCount, color: "#6366F1" },
-              // { label: "Documents embedded", value: workspace.docCount, color: "#0D9488" },
-              // { label: "Chats this week", value: chartData.reduce((s, d) => s + d.count, 0), color: "#D97706" },
-
               { label: "Total conversations", value: workspace.chatCount, color: "#6366F1" },
               { label: "Questions answered",  value: workspace.chatCount > 0 ? `${analytics.answeredPct}%` : "—", color: "#0D9488" },
               { label: "Avg response time",   value: workspace.chatCount > 0 ? `${analytics.avgResponseSec}s` : "—", color: "#D97706" },
@@ -435,16 +385,14 @@ const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https
             <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 80, padding: "0 4px" }}>
               {chartData.map((d, i) => (
                 <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                  <div
-                    style={{
-                      width: "100%",
-                      height: `${Math.round((d.count / maxChart) * 64) + 4}px`,
-                      background: i === 6 ? workspace.color : "#E2E8F0",
-                      borderRadius: "3px 3px 0 0",
-                      minHeight: 4,
-                      transition: "height .3s",
-                    }}
-                  />
+                  <div style={{
+                    width: "100%",
+                    height: `${Math.round((d.count / maxChart) * 64) + 4}px`,
+                    background: i === 6 ? workspace.color : "#E2E8F0",
+                    borderRadius: "3px 3px 0 0",
+                    minHeight: 4,
+                    transition: "height .3s",
+                  }} />
                 </div>
               ))}
             </div>
@@ -464,7 +412,7 @@ const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https
         <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #E2E8F0", padding: 20 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: "#0F172A", marginBottom: 20 }}>Workspace settings</div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 18 }}>
+          <div className="ppc-settings-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 18 }}>
             <div>
               <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#0F172A", marginBottom: 6 }}>Workspace name</label>
               <input
@@ -505,7 +453,7 @@ const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https
             <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 4 }}>This shapes how the AI responds to your users.</p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 18 }}>
+          <div className="ppc-settings-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 18 }}>
             <div>
               <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#0F172A", marginBottom: 6 }}>Temperature</label>
               <input
@@ -532,7 +480,7 @@ const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <div className="ppc-settings-footer" style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <button
               onClick={saveSettings}
               disabled={settingsSaving}
@@ -542,6 +490,7 @@ const snippetCode = `<script\n  src="${process.env.NEXT_PUBLIC_APP_URL ?? "https
             </button>
 
             <button
+              className="ppc-delete-btn"
               onClick={async () => {
                 if (!confirm("Are you sure? This will permanently delete this workspace and all its documents.")) return
                 const res = await fetch(`/api/workspace/${workspace.id}`, { method: "DELETE" })

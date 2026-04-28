@@ -1,5 +1,7 @@
+
+
 "use client"
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import Link from "next/link"
 
 type Doc = {
@@ -29,7 +31,7 @@ function formatSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-function FileIcon({ name, color }: { name: string; color: string }) {
+function FileIcon({ name }: { name: string }) {
   const ext = name.split(".").pop()?.toLowerCase()
   const colorMap: Record<string, { bg: string; stroke: string }> = {
     pdf:  { bg: "#EEF2FF", stroke: "#6366F1" },
@@ -72,11 +74,21 @@ export default function UploadPageClient({ workspaces }: Props) {
     return (ws?.documents ?? []).map(d => ({ ...d, status: "embedded" as const, progress: 100 }))
   })
   const [isDragging, setIsDragging] = useState(false)
-  const [toast, setToast] = useState("")
+  const [toast, setToast]           = useState("")
   const [toastVisible, setToastVisible] = useState(false)
+  const [isMobile, setIsMobile]     = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const selectedWs = workspaces.find(w => w.slug === selectedSlug)
+
+  // Mobile detection
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)")
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener("change", handler)
+    return () => mq.removeEventListener("change", handler)
+  }, [])
 
   function handleWsChange(slug: string) {
     setSelectedSlug(slug)
@@ -93,7 +105,6 @@ export default function UploadPageClient({ workspaces }: Props) {
   async function uploadFile(file: File) {
     const tempId = `temp-${Date.now()}-${file.name}`
 
-    // Add to list immediately as "uploading"
     setDocs(prev => [{
       id: tempId,
       filename: file.name,
@@ -103,7 +114,6 @@ export default function UploadPageClient({ workspaces }: Props) {
       progress: 0,
     }, ...prev])
 
-    // Simulate progress bar animation
     let progress = 0
     const interval = setInterval(() => {
       progress += Math.random() * 15 + 5
@@ -121,7 +131,6 @@ export default function UploadPageClient({ workspaces }: Props) {
 
       if (res.ok) {
         const data = await res.json()
-        // Replace temp with real doc, mark as indexing then embedded
         setDocs(prev => prev.map(d => d.id === tempId ? {
           id: data.document.id,
           filename: file.name,
@@ -130,20 +139,10 @@ export default function UploadPageClient({ workspaces }: Props) {
           status: "indexing",
           progress: 100,
         } : d))
-
-        // After 3s simulate indexing complete
         setTimeout(() => {
           setDocs(prev => prev.map(d => d.id === data.document.id ? { ...d, status: "embedded" } : d))
         }, 3000)
-      } 
-
-      // else {
-      //   const err = await res.json()
-      //   setDocs(prev => prev.map(d => d.id === tempId ? { ...d, status: "error", progress: 100 } : d))
-      //   showToast(err.error || "Upload failed")
-      // }
-
-      else {
+      } else {
         const err = await res.json()
         if (err.upgradeRequired) {
           const checkoutRes = await fetch("/api/billing/checkout", { method: "POST" })
@@ -153,7 +152,6 @@ export default function UploadPageClient({ workspaces }: Props) {
         setDocs(prev => prev.map(d => d.id === tempId ? { ...d, status: "error", progress: 100 } : d))
         showToast(err.error || "Upload failed")
       }
-
     } catch {
       clearInterval(interval)
       setDocs(prev => prev.map(d => d.id === tempId ? { ...d, status: "error", progress: 100 } : d))
@@ -169,32 +167,39 @@ export default function UploadPageClient({ workspaces }: Props) {
     showToast(`${arr.length} file${arr.length > 1 ? "s" : ""} queued for upload`)
   }
 
-  const onDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); setIsDragging(true) }, [])
+  const onDragOver  = useCallback((e: React.DragEvent) => { e.preventDefault(); setIsDragging(true) }, [])
   const onDragLeave = useCallback(() => setIsDragging(false), [])
- 
-  const onDrop = useCallback((e: React.DragEvent) => {
+  const onDrop      = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
     handleFiles(e.dataTransfer.files)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSlug])
 
-      const wsInitials = selectedWs?.name
-        .split(" ")
-        .map((w) => w[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2) ?? "WS"
+  const wsInitials = selectedWs?.name
+    .split(" ")
+    .map(w => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) ?? "WS"
 
   return (
-    <div style={{ padding: "28px 30px", fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif" }}>
-      {/* Page header */}
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 21, fontWeight: 700, color: "#0F172A", margin: 0 }}>Upload documents</h1>
-        <p style={{ fontSize: 13, color: "#475569", marginTop: 4 }}>Add files to a workspace to power your AI chatbot</p>
+    <div style={{
+      padding: isMobile ? "16px" : "28px 30px",
+      fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
+    }}>
+
+      {/* ── Page header ── */}
+      <div style={{ marginBottom: isMobile ? 16 : 24 }}>
+        <h1 style={{ fontSize: isMobile ? 18 : 21, fontWeight: 700, color: "#0F172A", margin: 0 }}>
+          Upload documents
+        </h1>
+        <p style={{ fontSize: 13, color: "#475569", marginTop: 4 }}>
+          Add files to a workspace to power your AI chatbot
+        </p>
       </div>
 
-      {/* No workspaces state */}
+      {/* ── No workspaces state ── */}
       {workspaces.length === 0 && (
         <div style={{ background: "#fff", border: "1px solid #E2E8F0", borderRadius: 12, padding: "40px 24px", textAlign: "center", marginBottom: 16 }}>
           <p style={{ color: "#475569", fontSize: 14, marginBottom: 12 }}>You don&apos;t have any workspaces yet.</p>
@@ -204,34 +209,81 @@ export default function UploadPageClient({ workspaces }: Props) {
         </div>
       )}
 
-      {/* Workspace selector */}
       {workspaces.length > 0 && (
         <>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 22, padding: "14px 16px", background: "#fff", borderRadius: 12, border: "1px solid #E2E8F0" }}>
-            <div style={{ width: 32, height: 32, background: selectedWs?.color ?? "#6366F1", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
-              {wsInitials}
+          {/* ── Workspace selector ── */}
+          <div style={{
+            display: "flex",
+            alignItems: isMobile ? "flex-start" : "center",
+            flexDirection: isMobile ? "column" : "row",
+            gap: 12,
+            marginBottom: isMobile ? 14 : 22,
+            padding: isMobile ? "12px" : "14px 16px",
+            background: "#fff",
+            borderRadius: 12,
+            border: "1px solid #E2E8F0",
+          }}>
+            {/* Top row: avatar + select */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, width: "100%" }}>
+              <div style={{
+                width: 32, height: 32,
+                background: selectedWs?.color ?? "#6366F1",
+                borderRadius: 8,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: "#fff", fontSize: 11, fontWeight: 700, flexShrink: 0,
+              }}>
+                {wsInitials}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 11, color: "#94A3B8", marginBottom: 4 }}>Adding to workspace</div>
+                <select
+                  value={selectedSlug}
+                  onChange={e => handleWsChange(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "6px 10px",
+                    border: "1px solid #E2E8F0",
+                    borderRadius: 7,
+                    fontSize: 13,
+                    fontFamily: "inherit",
+                    color: "#0F172A",
+                    background: "#fff",
+                    outline: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  {workspaces.map(w => (
+                    <option key={w.slug} value={w.slug}>{w.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, color: "#94A3B8", marginBottom: 4 }}>Adding to workspace</div>
-              <select
-                value={selectedSlug}
-                onChange={e => handleWsChange(e.target.value)}
-                style={{ padding: "6px 10px", border: "1px solid #E2E8F0", borderRadius: 7, fontSize: 13, fontFamily: "inherit", color: "#0F172A", background: "#fff", outline: "none", cursor: "pointer" }}
-              >
-                {workspaces.map(w => (
-                  <option key={w.slug} value={w.slug}>{w.name}</option>
-                ))}
-              </select>
-            </div>
+
+            {/* View workspace link — full-width on mobile */}
             <Link
-              href={`/dashboard/projects`}
-              style={{ padding: "5px 11px", borderRadius: 8, border: "1px solid #E2E8F0", background: "transparent", fontSize: 12, fontWeight: 600, color: "#475569", textDecoration: "none" }}
-            >
-              View workspace →
-            </Link>
+            href="/dashboard/projects"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: isMobile ? "100%" : "auto",
+              padding: "5px 11px",        // ← REMOVE the isMobile conditional, use fixed padding
+              borderRadius: 8,
+              border: "1px solid #E2E8F0",
+              background: "transparent",
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#475569",
+              textDecoration: "none",
+              whiteSpace: "nowrap",       // ← KEEP THIS so arrow never wraps
+              boxSizing: "border-box" as const,
+            }}
+          >
+            View workspace →
+          </Link>
           </div>
 
-          {/* Drop zone */}
+          {/* ── Drop zone ── */}
           <div
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
@@ -240,7 +292,7 @@ export default function UploadPageClient({ workspaces }: Props) {
             style={{
               border: `2px dashed ${isDragging ? "#6366F1" : "#E2E8F0"}`,
               borderRadius: 14,
-              padding: "48px 24px",
+              padding: isMobile ? "32px 16px" : "48px 24px",
               textAlign: "center",
               background: isDragging ? "#EEF2FF" : "#FAFBFC",
               cursor: "pointer",
@@ -257,28 +309,49 @@ export default function UploadPageClient({ workspaces }: Props) {
               style={{ display: "none" }}
               onChange={e => handleFiles(e.target.files)}
             />
-            <div style={{ width: 52, height: 52, background: isDragging ? "#6366F1" : "#EEF2FF", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px", transition: "all .18s" }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={isDragging ? "#fff" : "#6366F1"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+
+            <div style={{
+              width: isMobile ? 44 : 52,
+              height: isMobile ? 44 : 52,
+              background: isDragging ? "#6366F1" : "#EEF2FF",
+              borderRadius: 14,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              margin: `0 auto ${isMobile ? 10 : 14}px`,
+              transition: "all .18s",
+            }}>
+              <svg width={isMobile ? 20 : 24} height={isMobile ? 20 : 24} viewBox="0 0 24 24" fill="none" stroke={isDragging ? "#fff" : "#6366F1"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
                 <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
               </svg>
             </div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: isDragging ? "#6366F1" : "#0F172A", marginBottom: 6 }}>
-              {isDragging ? "Drop to upload" : "Drag & drop your files here"}
+
+            <div style={{ fontSize: isMobile ? 14 : 15, fontWeight: 600, color: isDragging ? "#6366F1" : "#0F172A", marginBottom: 6 }}>
+              {isDragging ? "Drop to upload" : isMobile ? "Tap to browse files" : "Drag & drop your files here"}
             </div>
-            <div style={{ fontSize: 12, color: "#94A3B8", marginBottom: 16 }}>
-              {isDragging ? `Release to add to ${selectedWs?.name}` : "or click anywhere to browse · max 50 MB per file"}
+            <div style={{ fontSize: 12, color: "#94A3B8", marginBottom: isMobile ? 12 : 16 }}>
+              {isDragging
+                ? `Release to add to ${selectedWs?.name}`
+                : isMobile
+                ? "Max 50 MB per file"
+                : "or click anywhere to browse · max 50 MB per file"}
             </div>
+
             <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap" }}>
               {["PDF", "DOCX", "TXT", "MD", "CSV"].map(fmt => (
-                <span key={fmt} style={{ background: "#EEF2FF", color: "#3730A3", padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600 }}>{fmt}</span>
+                <span key={fmt} style={{ background: "#EEF2FF", color: "#3730A3", padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600 }}>
+                  {fmt}
+                </span>
               ))}
             </div>
           </div>
 
-          {/* Recent uploads */}
+          {/* ── Recent uploads list ── */}
           <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #E2E8F0", overflow: "hidden" }}>
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #E2E8F0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{
+              padding: isMobile ? "10px 14px" : "12px 16px",
+              borderBottom: "1px solid #E2E8F0",
+              display: "flex", justifyContent: "space-between", alignItems: "center",
+            }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: "#0F172A" }}>Recent uploads</span>
               <span style={{ fontSize: 11, color: "#94A3B8" }}>{docs.length} file{docs.length !== 1 ? "s" : ""}</span>
             </div>
@@ -290,25 +363,56 @@ export default function UploadPageClient({ workspaces }: Props) {
             ) : (
               <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
                 {docs.map(doc => (
-                  <li key={doc.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: "1px solid #F8FAFC" }}>
-                    <FileIcon name={doc.filename} color={selectedWs?.color ?? "#6366F1"} />
+                  <li
+                    key={doc.id}
+                    style={{
+                      display: "flex",
+                      alignItems: isMobile ? "flex-start" : "center",
+                      gap: 12,
+                      padding: isMobile ? "12px 14px" : "12px 16px",
+                      borderBottom: "1px solid #F8FAFC",
+                    }}
+                  >
+                    <FileIcon name={doc.filename} />
+
+                    {/* File info — grows to fill */}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", animation: doc.status === "uploading" ? "pulse 1.5s infinite" : "none" }}>
+                      <div style={{
+                        fontSize: 13, fontWeight: 600, color: "#0F172A",
+                        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                        animation: doc.status === "uploading" ? "pulse 1.5s infinite" : "none",
+                        // On mobile, allow up to the badge
+                        maxWidth: isMobile ? "calc(100vw - 120px)" : "none",
+                      }}>
                         {doc.filename}
                       </div>
                       <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 1 }}>
                         {formatSize(doc.size)} · {doc.status === "uploading" ? "uploading…" : new Date(doc.uploadedAt).toLocaleDateString()}
                       </div>
-                      <div style={{ width: 90, height: 4, background: "#E2E8F0", borderRadius: 2, marginTop: 4, overflow: "hidden" }}>
+
+                      {/* Progress bar */}
+                      <div style={{ width: isMobile ? "100%" : 90, height: 4, background: "#E2E8F0", borderRadius: 2, marginTop: 6, overflow: "hidden" }}>
                         <div style={{
                           height: "100%", borderRadius: 2,
                           width: `${doc.progress ?? 100}%`,
-                          background: doc.status === "error" ? "#EF4444" : doc.status === "uploading" ? "#0D9488" : doc.status === "indexing" ? "#D97706" : "#6366F1",
+                          background: doc.status === "error" ? "#EF4444"
+                            : doc.status === "uploading" ? "#0D9488"
+                            : doc.status === "indexing"  ? "#D97706"
+                            : "#6366F1",
                           transition: "width 0.5s ease",
                         }} />
                       </div>
+
+                      {/* Badge inline on mobile (below the bar) */}
+                      {isMobile && (
+                        <div style={{ marginTop: 6 }}>
+                          <Badge status={doc.status ?? "embedded"} />
+                        </div>
+                      )}
                     </div>
-                    <Badge status={doc.status ?? "embedded"} />
+
+                    {/* Badge on the right only on desktop */}
+                    {!isMobile && <Badge status={doc.status ?? "embedded"} />}
                   </li>
                 ))}
               </ul>
@@ -317,15 +421,24 @@ export default function UploadPageClient({ workspaces }: Props) {
         </>
       )}
 
-      {/* Toast */}
+      {/* ── Toast ── */}
       <div style={{
-        position: "fixed", bottom: 24, right: 24,
-        background: "#0F172A", color: "#fff",
-        padding: "10px 16px", borderRadius: 10,
-        fontSize: 13, fontWeight: 500,
+        position: "fixed",
+        bottom: isMobile ? 16 : 24,
+        right: isMobile ? 16 : 24,
+        left: isMobile ? 16 : "auto",
+        background: "#0F172A",
+        color: "#fff",
+        padding: "10px 16px",
+        borderRadius: 10,
+        fontSize: 13,
+        fontWeight: 500,
         opacity: toastVisible ? 1 : 0,
         transform: toastVisible ? "translateY(0)" : "translateY(8px)",
-        transition: "all .25s", pointerEvents: "none", zIndex: 100,
+        transition: "all .25s",
+        pointerEvents: "none",
+        zIndex: 100,
+        textAlign: isMobile ? "center" : "left",
       }}>
         {toast}
       </div>

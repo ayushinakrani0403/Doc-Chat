@@ -1,5 +1,6 @@
+
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
@@ -43,14 +44,26 @@ function isActiveLink(href: string, pathname: string): boolean {
 export default function Sidebar() {
   const pathname = usePathname()
   const { data: session } = useSession()
+
   const [collapsed, setCollapsed] = useState(false)
-  const [showMenu, setShowMenu] = useState(false)
+  const [showMenu, setShowMenu]   = useState(false)
+  const [isMobile, setIsMobile]   = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)")
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener("change", handler)
+    return () => mq.removeEventListener("change", handler)
+  }, [])
 
   const initials = session?.user?.name
     ? session.user.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
     : "U"
 
-  const w = collapsed ? 60 : 220
+  // On mobile: always icon-only (60px). On desktop: respect user toggle.
+  const isCollapsed = isMobile || collapsed
+  const w = isCollapsed ? 60 : 220
 
   return (
     <>
@@ -76,16 +89,15 @@ export default function Sidebar() {
         position: "relative",
       }}>
 
-        {/* Grid overlay — matches login page */}
+        {/* Grid overlay */}
         <div style={{
-          position: "absolute", inset: 0,
-          opacity: 0.035,
+          position: "absolute", inset: 0, opacity: 0.035,
           backgroundImage: "linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px)",
           backgroundSize: "48px 48px",
           pointerEvents: "none", zIndex: 0,
         }} />
 
-        {/* Radial glow top-left — matches login ::before */}
+        {/* Radial glow top-left */}
         <div style={{
           position: "absolute", top: -120, left: -80,
           width: 280, height: 280, borderRadius: "50%",
@@ -93,7 +105,7 @@ export default function Sidebar() {
           pointerEvents: "none", zIndex: 0,
         }} />
 
-        {/* Radial glow bottom-right — matches login ::after */}
+        {/* Radial glow bottom-right */}
         <div style={{
           position: "absolute", bottom: -100, right: -60,
           width: 200, height: 200, borderRadius: "50%",
@@ -101,17 +113,16 @@ export default function Sidebar() {
           pointerEvents: "none", zIndex: 0,
         }} />
 
-        {/* ── Logo + toggle ── */}
+        {/* ── Logo + collapse toggle ── */}
         <div style={{
           padding: "16px 12px",
           borderBottom: "1px solid rgba(255,255,255,0.06)",
-          display: "flex", alignItems: "center",
-          gap: 10,
-          justifyContent: collapsed ? "center" : "space-between",
+          display: "flex", alignItems: "center", gap: 10,
+          justifyContent: isCollapsed ? "center" : "space-between",
           flexShrink: 0, position: "relative", zIndex: 1,
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-            {/* Logo icon */}
+            {/* Logo icon — always visible */}
             <div style={{
               width: 32, height: 32, background: "#7c3aed",
               borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center",
@@ -121,7 +132,9 @@ export default function Sidebar() {
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
               </svg>
             </div>
-            {!collapsed && (
+
+            {/* Wordmark — hidden when collapsed */}
+            {!isCollapsed && (
               <div style={{ minWidth: 0 }}>
                 <div style={{ color: "#fff", fontWeight: 700, fontSize: 15, whiteSpace: "nowrap", letterSpacing: "-0.3px" }}>DocChat</div>
                 <div style={{ fontSize: 10, marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}>
@@ -134,8 +147,8 @@ export default function Sidebar() {
             )}
           </div>
 
-          {/* Collapse button */}
-          {!collapsed && (
+          {/* Collapse «« button — desktop, expanded only */}
+          {!isMobile && !collapsed && (
             <button
               className="sidebar-collapse-btn"
               onClick={() => setCollapsed(true)}
@@ -149,8 +162,8 @@ export default function Sidebar() {
           )}
         </div>
 
-        {/* Expand button when collapsed */}
-        {collapsed && (
+        {/* Expand »» button — desktop, collapsed only */}
+        {!isMobile && collapsed && (
           <div style={{ padding: "10px 0", display: "flex", justifyContent: "center", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0, position: "relative", zIndex: 1 }}>
             <button
               className="sidebar-collapse-btn"
@@ -166,10 +179,11 @@ export default function Sidebar() {
         )}
 
         {/* ── Nav ── */}
-        <nav style={{ padding: collapsed ? "8px 6px" : "8px 8px", flex: 1, overflowY: "auto", overflowX: "hidden", position: "relative", zIndex: 1 }}>
+        <nav style={{ padding: isCollapsed ? "8px 6px" : "8px 8px", flex: 1, overflowY: "auto", overflowX: "hidden", position: "relative", zIndex: 1 }}>
           {navItems.map((group) => (
             <div key={group.section}>
-              {!collapsed && (
+              {/* Section label — hidden when collapsed */}
+              {!isCollapsed && (
                 <div style={{
                   padding: "14px 10px 4px",
                   fontSize: 9, fontWeight: 600, color: "#3f3f46",
@@ -178,7 +192,7 @@ export default function Sidebar() {
                   {group.section}
                 </div>
               )}
-              {collapsed && <div style={{ height: 10 }} />}
+              {isCollapsed && <div style={{ height: 10 }} />}
 
               {group.links.map((item) => {
                 const isActive = isActiveLink(item.href, pathname)
@@ -186,13 +200,13 @@ export default function Sidebar() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    title={collapsed ? item.label : undefined}
+                    title={isCollapsed ? item.label : undefined}
                     className="sidebar-nav-link"
                     style={{
                       display: "flex", alignItems: "center",
-                      gap: collapsed ? 0 : 9,
-                      padding: collapsed ? "9px 0" : "8px 10px",
-                      justifyContent: collapsed ? "center" : "flex-start",
+                      gap: isCollapsed ? 0 : 9,
+                      padding: isCollapsed ? "9px 0" : "8px 10px",
+                      justifyContent: isCollapsed ? "center" : "flex-start",
                       borderRadius: 8, textDecoration: "none",
                       color: isActive ? "#a78bfa" : "#71717a",
                       fontSize: 13, fontWeight: isActive ? 600 : 400,
@@ -205,7 +219,7 @@ export default function Sidebar() {
                     <span style={{ width: 16, height: 16, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                       {item.icon}
                     </span>
-                    {!collapsed && item.label}
+                    {!isCollapsed && item.label}
                   </Link>
                 )
               })}
@@ -215,13 +229,13 @@ export default function Sidebar() {
 
         {/* ── User section ── */}
         <div style={{
-          padding: collapsed ? "12px 0" : "10px 10px",
+          padding: isCollapsed ? "12px 0" : "10px 10px",
           borderTop: "1px solid rgba(255,255,255,0.06)",
           position: "relative", flexShrink: 0, zIndex: 1,
         }}>
 
-          {/* Popup menu */}
-          {showMenu && !collapsed && (
+          {/* Popup menu — only shown on desktop when expanded */}
+          {showMenu && !isCollapsed && (
             <>
               <div onClick={() => setShowMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
               <div style={{
@@ -232,12 +246,6 @@ export default function Sidebar() {
                 overflow: "hidden", zIndex: 20, marginBottom: 6,
                 boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
               }}>
-                {/* User info header */}
-                {/* <div style={{ padding: "12px 14px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "#e4e4e7" }}>{session?.user?.name || "User"}</div>
-                  <div style={{ fontSize: 11, color: "#52525b", marginTop: 2 }}>{session?.user?.email || ""}</div>
-                </div> */}
-
                 <Link
                   href="/dashboard/settings"
                   onClick={() => setShowMenu(false)}
@@ -249,7 +257,6 @@ export default function Sidebar() {
                   </svg>
                   Settings
                 </Link>
-
                 <button
                   onClick={() => signOut({ callbackUrl: "/login" })}
                   className="sidebar-signout-btn"
@@ -268,21 +275,21 @@ export default function Sidebar() {
 
           {/* User row */}
           <div
-            className={!collapsed ? "sidebar-user-row" : ""}
-            onClick={() => !collapsed && setShowMenu(!showMenu)}
+            className={!isCollapsed ? "sidebar-user-row" : ""}
+            onClick={() => !isCollapsed && setShowMenu(!showMenu)}
             style={{
               display: "flex", alignItems: "center",
-              gap: collapsed ? 0 : 9,
-              justifyContent: collapsed ? "center" : "flex-start",
-              cursor: collapsed ? "default" : "pointer",
-              padding: collapsed ? 0 : "6px 6px",
+              gap: isCollapsed ? 0 : 9,
+              justifyContent: isCollapsed ? "center" : "flex-start",
+              cursor: isCollapsed ? "default" : "pointer",
+              padding: isCollapsed ? 0 : "6px 6px",
               borderRadius: 8,
-              background: showMenu && !collapsed ? "rgba(124,58,237,0.1)" : "transparent",
-              border: showMenu && !collapsed ? "1px solid rgba(124,58,237,0.2)" : "1px solid transparent",
+              background: showMenu && !isCollapsed ? "rgba(124,58,237,0.1)" : "transparent",
+              border: showMenu && !isCollapsed ? "1px solid rgba(124,58,237,0.2)" : "1px solid transparent",
               transition: "all .12s",
             }}
           >
-            {/* Avatar */}
+            {/* Avatar — always visible */}
             <div style={{
               width: 30, height: 30,
               background: "linear-gradient(135deg, #7c3aed, #6366F1)",
@@ -294,7 +301,8 @@ export default function Sidebar() {
               {initials}
             </div>
 
-            {!collapsed && (
+            {/* Name + email + chevron — hidden when collapsed */}
+            {!isCollapsed && (
               <>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ color: "#e4e4e7", fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
